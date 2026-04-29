@@ -14,60 +14,73 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // ── Helper: fetch & normalize all products from exito + alkosto ──
 async function fetchAllProducts() {
-  const admin = mongoose.connection.db.admin();
-  const { databases } = await admin.listDatabases();
+  try {
+    const admin = mongoose.connection.db.admin();
+    const { databases } = await admin.listDatabases();
+    
+    const dbNames = databases
+      .map(db => db.name)
+      .filter(name => !['admin', 'config', 'local'].includes(name));
 
-  // Exclude system databases
-  const databasesToFetch = databases
-    .map(db => db.name)
-    .filter(name => !['admin', 'config', 'local'].includes(name));
+    const allProducts = [];
 
-  const allProducts = [];
+    for (const dbName of dbNames) {
+      const db = mongoose.connection.client.db(dbName);
+      const collections = await db.listCollections().toArray();
 
-  for (const dbName of databasesToFetch) {
-    const db = mongoose.connection.useDb(dbName);
-    const collections = await db.db.listCollections().toArray();
+      for (const col of collections) {
+        const docs = await db.collection(col.name).find({}).toArray();
+        for (const doc of docs) {
+          if (!doc.nombre || !doc.tienda || !doc.enlace) continue;
 
-    for (const col of collections) {
-      const docs = await db.collection(col.name).find({}).toArray();
-      for (const doc of docs) {
-        if (!doc.nombre || !doc.precio || !doc.tienda || !doc.enlace) continue;
+          // Robust price parsing: Check multiple possible fields
+          const rawPrice = doc.precio_promocion || doc.promocion || doc.precio;
+          let priceNum = 0;
 
-        let priceNum = 0;
-        if (typeof doc.precio === 'string') {
-          const parsed = parseInt(doc.precio.replace(/\./g, '').replace(/ COP/gi, '').trim());
-          if (!isNaN(parsed)) priceNum = parsed;
-        } else if (typeof doc.precio === 'number') {
-          priceNum = doc.precio;
-        }
-
-        if (priceNum > 0) {
-          let imageUrl = doc.imagen || null;
-          if (imageUrl && typeof imageUrl === 'string') {
-            // Encode spaces in URL
-            imageUrl = imageUrl.trim().replace(/ /g, '%20');
-            // Fix relative paths like "/../" found in some DBs
-            if (imageUrl.includes('/../')) {
-              imageUrl = imageUrl.replace('/../', '/');
-            }
+          if (typeof rawPrice === 'number') {
+            priceNum = rawPrice;
+          } else if (typeof rawPrice === 'string') {
+            // Remove everything except numbers (currency symbols, spaces, "COP", etc)
+            const cleaned = rawPrice.replace(/[^0-9]/g, '');
+            priceNum = parseInt(cleaned) || 0;
           }
 
-          allProducts.push({
-            _id: doc._id.toString(),
-            name: doc.nombre,
-            price: priceNum,
-            originalPrice: doc.precio_original || doc.precio_antes || null,
-            brand: doc.marca || 'Genérico',
-            store: doc.tienda,
-            url: doc.enlace_normalized || doc.enlace,
-            category: doc.categoria || col.name,
-            image: imageUrl
-          });
+          // Fallback check: if doc.precio was "Precio no disponible", 
+          // we might have skipped it if we only checked doc.precio.
+          if (priceNum === 0 && doc.precio_original) {
+             // Sometimes only original is there? Unlikely but let's be safe
+          }
+
+          if (priceNum > 0) {
+            let imageUrl = doc.imagen || null;
+            if (imageUrl && typeof imageUrl === 'string') {
+              imageUrl = imageUrl.trim().replace(/ /g, '%20').replace('/../', '/');
+            }
+
+            // Normalize store name (remove accents for filtering consistency)
+            let storeName = doc.tienda;
+            if (storeName === 'Éxito') storeName = 'Exito';
+
+            allProducts.push({
+              _id: doc._id.toString(),
+              name: doc.nombre,
+              price: priceNum,
+              originalPrice: doc.precio_original || doc.precio_antes || null,
+              brand: doc.marca || 'Genérico',
+              store: storeName,
+              url: doc.enlace_normalized || doc.enlace,
+              category: doc.categoria || col.name,
+              image: imageUrl
+            });
+          }
         }
       }
     }
+    return allProducts;
+  } catch (err) {
+    console.error('Error in fetchAllProducts:', err);
+    return [];
   }
-  return allProducts;
 }
 
 // ── GET /api/summary — lobby data ──
