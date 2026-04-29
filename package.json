@@ -1,0 +1,14 @@
+{
+  "name": "mongo-web-project",
+  "version": "1.0.0",
+  "description": "A project to display MongoDB data on a webpage",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^4.18.0",
+    "mongoose": "^7.0.0"
+  }
+}

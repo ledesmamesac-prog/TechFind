@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+jspm_packages/
+
+# Variables de entorno (¡MUY IMPORTANTE! Nunca subir tus claves)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Configuración de IDE (Opcional, pero recomendado)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Otros
+dist/
+build/
+.cache/

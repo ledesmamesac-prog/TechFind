@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechFind — Compara precios de tecnología en Colombia</title>
+  <meta name="description"
+    content="Encuentra y compara precios de computadores, celulares, tablets y más en Éxito y Alkosto.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="lobby-page">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <span class="logo-mark">T</span>
+      <span class="logo-text">TechFind</span>
+    </div>
+    <nav class="topbar-nav">
+      <a href="index.html" class="nav-link active">Inicio</a>
+      <a href="category.html" class="nav-link">Todos los productos</a>
+    </nav>
+    <div class="topbar-stores">
+      <span class="store-badge exito-badge">Éxito</span>
+      <span class="store-badge alkosto-badge">Alkosto</span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-label">Comparador de precios · Colombia</div>
+      <h1 class="hero-title">Encuentra el mejor<br>precio en tecnología</h1>
+      <p class="hero-sub">Comparamos productos de <strong>Éxito</strong> y <strong>Alkosto</strong> para que nunca
+        pagues de más.</p>
+      <div class="hero-stats" id="hero-stats">
+        <div class="hero-stat"><span class="stat-num" id="stat-total">—</span><span class="stat-label">productos</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat"><span class="stat-num" id="stat-cats">—</span><span class="stat-label">categorías</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat"><span class="stat-num" id="stat-stores">—</span><span class="stat-label">tiendas</span></div>
+      </div>
+      <div style="margin-top: 1rem; text-align: left; font-size: 0.875rem;">
+        <p style="margin: 0; color: #be1111;">*Actualizaciones cada 24 horas</p>
+      </div>
+    </div>
+    <div class="hero-bg-grid" aria-hidden="true"></div>
+  </section>
+
+  <!-- CATEGORY CARDS -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Explorar por categoría</h2>
+      <a href="category.html" class="section-link">Ver todo →</a>
+    </div>
+    <div class="cat-cards-grid" id="cat-cards-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </section>
+
+  <!-- FEATURED PRODUCTS -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Productos destacados</h2>
+      <a href="category.html" class="section-link">Ver todos →</a>
+    </div>
+    <div class="featured-grid" id="featured-grid">
+      <div class="skeleton-card tall"></div>
+      <div class="skeleton-card tall"></div>
+      <div class="skeleton-card tall"></div>
+      <div class="skeleton-card tall"></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>TechFind © 2025 · Precios actualizados cada 24 horas</span>
+  </footer>
+
+  <script src="icons.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
