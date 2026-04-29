@@ -42,16 +42,26 @@ async function fetchAllProducts() {
         }
 
         if (priceNum > 0) {
+          let imageUrl = doc.imagen || null;
+          if (imageUrl && typeof imageUrl === 'string') {
+            // Encode spaces in URL
+            imageUrl = imageUrl.trim().replace(/ /g, '%20');
+            // Fix relative paths like "/../" found in some DBs
+            if (imageUrl.includes('/../')) {
+              imageUrl = imageUrl.replace('/../', '/');
+            }
+          }
+
           allProducts.push({
             _id: doc._id.toString(),
             name: doc.nombre,
             price: priceNum,
-            originalPrice: doc.precio_original || doc.precio_antes || null, // Common fields for original price
+            originalPrice: doc.precio_original || doc.precio_antes || null,
             brand: doc.marca || 'Genérico',
             store: doc.tienda,
             url: doc.enlace_normalized || doc.enlace,
             category: doc.categoria || col.name,
-            image: doc.imagen || null
+            image: imageUrl
           });
         }
       }
