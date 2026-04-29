@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URI, {
 async function fetchAllProducts() {
   const admin = mongoose.connection.db.admin();
   const { databases } = await admin.listDatabases();
-  
+
   // Exclude system databases
   const databasesToFetch = databases
     .map(db => db.name)
@@ -43,15 +43,15 @@ async function fetchAllProducts() {
 
         if (priceNum > 0) {
           allProducts.push({
-            _id:      doc._id.toString(),
-            name:     doc.nombre,
-            price:    priceNum,
+            _id: doc._id.toString(),
+            name: doc.nombre,
+            price: priceNum,
             originalPrice: doc.precio_original || doc.precio_antes || null, // Common fields for original price
-            brand:    doc.marca || 'Genérico',
-            store:    doc.tienda,
-            url:      doc.enlace_normalized || doc.enlace,
+            brand: doc.marca || 'Genérico',
+            store: doc.tienda,
+            url: doc.enlace_normalized || doc.enlace,
             category: doc.categoria || col.name,
-            image:    doc.imagen || null
+            image: doc.imagen || null
           });
         }
       }
@@ -65,7 +65,7 @@ app.get('/api/summary', async (req, res) => {
   try {
     const all = await fetchAllProducts();
 
-    const CAT_ORDER = ['computadores','celulares','tablets','pantallas','audio','consolas','impresoras','otros'];
+    const CAT_ORDER = ['computadores', 'celulares', 'tablets', 'pantallas', 'audio', 'consolas', 'impresoras', 'otros'];
 
     // Build category map
     const catMap = {};
@@ -95,7 +95,7 @@ app.get('/api/summary', async (req, res) => {
 
     // Featured products: 2 from each of top categories (with images preferred)
     const featured = [];
-    const featuredCats = ['computadores','celulares','tablets','pantallas','audio','consolas'];
+    const featuredCats = ['computadores', 'celulares', 'tablets', 'pantallas', 'audio', 'consolas'];
     featuredCats.forEach(cat => {
       const items = (catMap[cat] || [])
         .sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0))
@@ -120,7 +120,7 @@ app.get('/api/products', async (req, res) => {
     let all = await fetchAllProducts();
 
     if (category) all = all.filter(p => p.category === category);
-    if (store)    all = all.filter(p => p.store.toLowerCase() === store.toLowerCase());
+    if (store) all = all.filter(p => p.store.toLowerCase() === store.toLowerCase());
 
     res.json(all);
   } catch (err) {
@@ -143,4 +143,4 @@ app.get('/databases', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
