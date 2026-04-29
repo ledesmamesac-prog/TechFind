@@ -61,6 +61,11 @@ async function fetchAllProducts() {
             let storeName = doc.tienda;
             if (storeName === 'Éxito') storeName = 'Exito';
 
+            // Proxy images for stores with hotlink protection (Compulago/Computerworking)
+            if (imageUrl && (storeName === 'Compulago' || storeName === 'Computerworking')) {
+              imageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+            }
+
             allProducts.push({
               _id: doc._id.toString(),
               name: doc.nombre,
@@ -163,6 +168,33 @@ app.get('/databases', async (req, res) => {
     res.json(databases.databases);
   } catch (err) {
     res.status(500).json({ error: 'Failed to list databases' });
+  }
+});
+
+// ── Image Proxy (to bypass Hotlink protection 403) ──
+app.get('/api/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).send('No URL provided');
+  
+  try {
+    const response = await fetch(imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+    
+    // Convert response body to buffer and send
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    res.send(buffer);
+  } catch (err) {
+    console.error('Proxy Error:', err.message);
+    res.status(500).send('Error proxying image');
   }
 });
 
