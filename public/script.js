@@ -50,6 +50,19 @@ function renderCategoryCards(categories) {
   });
 }
 
+function formatPriceHtml(p) {
+  const hasDiscount = p.originalPrice && p.originalPrice > p.price;
+  if (!hasDiscount) {
+    return `<span class="feat-price">$${Number(p.price).toLocaleString()}</span>`;
+  }
+  return `
+    <div class="feat-price-wrap">
+      <span class="feat-price-old">$${Number(p.originalPrice).toLocaleString()}</span>
+      <span class="feat-price-new">$${Number(p.price).toLocaleString()}</span>
+    </div>
+  `;
+}
+
 // ── FEATURED PRODUCTS ──
 function renderFeatured(products) {
   const grid = document.getElementById('featured-grid');
@@ -68,13 +81,20 @@ function renderFeatured(products) {
       ? `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const svgFallback = `<span class="feat-placeholder" style="${p.image ? 'display:none' : ''}">${fallbackIcon}</span>`;
+    
+    const discountTag = (p.discount || (p.originalPrice && p.originalPrice > p.price)) 
+      ? `<span class="feat-discount">${p.discount || 'OFERTA'}</span>` 
+      : '';
 
     card.innerHTML = `
-      <div class="feat-img">${imgContent}${svgFallback}</div>
+      <div class="feat-img">
+        ${imgContent}${svgFallback}
+        ${discountTag}
+      </div>
       <div class="feat-body">
         <span class="feat-store ${p.store === 'Alkosto' ? 'alkosto-badge' : 'exito-badge'}">${p.store}</span>
         <span class="feat-name">${p.name}</span>
-        <span class="feat-price">$${Number(p.price).toLocaleString()}</span>
+        ${formatPriceHtml(p)}
       </div>
     `;
     grid.appendChild(card);

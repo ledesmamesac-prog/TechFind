@@ -238,6 +238,19 @@ function renderProducts(products) {
   });
 }
 
+function formatPriceHtml(p) {
+  const hasDiscount = p.originalPrice && p.originalPrice > p.price;
+  if (!hasDiscount) {
+    return `<div class="card-price">$${Number(p.price).toLocaleString()}</div>`;
+  }
+  return `
+    <div class="card-price-wrap">
+      <div class="card-price-old">$${Number(p.originalPrice).toLocaleString()}</div>
+      <div class="card-price-new">$${Number(p.price).toLocaleString()}</div>
+    </div>
+  `;
+}
+
 function makeCard(product, delay = 0) {
   const card = document.createElement('div');
   card.className = 'product-card';
@@ -249,13 +262,18 @@ function makeCard(product, delay = 0) {
     : '';
   const svgFallback = `<span class="card-img-fallback" style="${product.image ? 'display:none' : ''}">${catIcon(product.category, 40)}</span>`;
 
+  const discountTag = (product.discount || (product.originalPrice && product.originalPrice > product.price)) 
+    ? `<span class="card-discount-badge">${product.discount || 'OFERTA'}</span>` 
+    : '';
+
   card.innerHTML = `
     <div class="card-img-box">
       ${imgContent}${svgFallback}
       <span class="card-store">${product.store}</span>
+      ${discountTag}
     </div>
     <div class="card-name">${product.name}</div>
-    <div class="card-price">$${Number(product.price).toLocaleString()}</div>
+    ${formatPriceHtml(product)}
     <div class="card-actions">
       <a class="btn-view" href="${product.url}" target="_blank" rel="noopener">Ver producto</a>
       <button class="btn-compare ${inCompare ? 'active' : ''}" data-id="${product._id}">

@@ -492,6 +492,39 @@ body {
   letter-spacing: -0.02em;
 }
 
+.feat-price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.feat-price-old {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  font-family: var(--font-mono);
+}
+
+.feat-price-new {
+  font-size: 15px;
+  font-weight: 700;
+  color: #be1111;
+}
+
+.feat-discount {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #be1111;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(190, 17, 17, 0.3);
+  z-index: 2;
+}
+
 /* ══════════════════════════════
    SKELETONS
 ══════════════════════════════ */
@@ -970,6 +1003,41 @@ input[type="range"] {
   font-family: var(--font-mono);
   color: var(--text-primary);
   letter-spacing: -0.02em;
+}
+
+.card-price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: -4px;
+}
+
+.card-price-old {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  font-family: var(--font-mono);
+}
+
+.card-price-new {
+  font-size: 16px;
+  font-weight: 700;
+  color: #be1111;
+  font-family: var(--font-mono);
+}
+
+.card-discount-badge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background: #be1111;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .card-actions {

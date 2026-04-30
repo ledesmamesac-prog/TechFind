@@ -17,7 +17,7 @@ async function fetchAllProducts() {
   try {
     const admin = mongoose.connection.db.admin();
     const { databases } = await admin.listDatabases();
-    
+
     const dbNames = databases
       .map(db => db.name)
       .filter(name => !['admin', 'config', 'local'].includes(name));
@@ -48,7 +48,7 @@ async function fetchAllProducts() {
           // Fallback check: if doc.precio was "Precio no disponible", 
           // we might have skipped it if we only checked doc.precio.
           if (priceNum === 0 && doc.precio_original) {
-             // Sometimes only original is there? Unlikely but let's be safe
+            // Sometimes only original is there? Unlikely but let's be safe
           }
 
           if (priceNum > 0) {
@@ -58,19 +58,36 @@ async function fetchAllProducts() {
             }
 
             // Normalize store name (remove accents for filtering consistency)
-            let storeName = doc.tienda;
+            let storeName = (doc.tienda || 'Otro').trim();
             if (storeName === 'Éxito') storeName = 'Exito';
 
             // Proxy images for stores with hotlink protection (Compulago/Computerworking)
-            if (imageUrl && (storeName === 'Compulago' || storeName === 'Computerworking')) {
+            if (imageUrl && (imageUrl.includes('compulago.com') || imageUrl.includes('computerworking.com'))) {
               imageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+            }
+
+            // DISCOUNT LOGIC
+            let discount = doc.descuento || null;
+            let originalPrice = doc.precio_original || doc.precio_antes || null;
+
+            if (originalPrice && typeof originalPrice === 'string') {
+               const cleanedOrig = originalPrice.replace(/[^0-9]/g, '');
+               originalPrice = parseInt(cleanedOrig) || null;
+            }
+
+            if (!originalPrice && discount && typeof discount === 'string' && discount.includes('%')) {
+              const pct = parseInt(discount.replace(/[^0-9]/g, ''));
+              if (pct > 0 && pct < 100) {
+                originalPrice = Math.round(priceNum / (1 - pct / 100));
+              }
             }
 
             allProducts.push({
               _id: doc._id.toString(),
               name: doc.nombre,
               price: priceNum,
-              originalPrice: doc.precio_original || doc.precio_antes || null,
+              originalPrice: originalPrice,
+              discount: discount,
               brand: doc.marca || 'Genérico',
               store: storeName,
               url: doc.enlace_normalized || doc.enlace,
@@ -175,19 +192,19 @@ app.get('/databases', async (req, res) => {
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).send('No URL provided');
-  
+
   try {
     const response = await fetch(imageUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
     });
-    
+
     if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
-    
+
     const contentType = response.headers.get('content-type');
     if (contentType) res.setHeader('Content-Type', contentType);
-    
+
     // Convert response body to buffer and send
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
