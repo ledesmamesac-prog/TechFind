@@ -26,7 +26,12 @@
       <a href="index.html" class="nav-link active">Inicio</a>
       <a href="category.html" class="nav-link">Todos los productos</a>
     </nav>
-    <div class="topbar-stores" id="topbar-stores-list">
+    <div class="topbar-stores">
+      <a href="category.html?store=Alkosto" class="store-badge alkosto-badge">ALKOSTO</a>
+      <a href="category.html?store=Compulago" class="store-badge compulago-badge">COMPULAGO</a>
+      <a href="category.html?store=Computerworking" class="store-badge computerworking-badge">COMPUTERWORKING</a>
+      <a href="category.html?store=Exito" class="store-badge exito-badge">EXITO</a>
+      <a href="category.html?store=Falabella" class="store-badge falabella-badge">FALABELLA</a>
     </div>
   </header>
 
@@ -79,6 +84,52 @@
       <div class="skeleton-card tall"></div>
       <div class="skeleton-card tall"></div>
       <div class="skeleton-card tall"></div>
+    </div>
+  </section>
+
+  <!-- LOCATIONS SECTION -->
+  <section class="section locations-section">
+    <div class="section-header">
+      <div style="flex:1">
+        <h2 class="section-title">Tiendas Físicas en Cartagena</h2>
+        <p style="font-size: 13px; color: var(--text-tertiary); margin-top: 4px;">Encuentra nuestras tiendas aliadas cerca de ti</p>
+      </div>
+    </div>
+    
+    <div class="locations-container">
+      <div class="locations-tabs" id="location-tabs">
+        <button class="loc-tab active" data-store="Alkosto">Alkosto</button>
+        <button class="loc-tab" data-store="Compulago">Compulago</button>
+        <button class="loc-tab" data-store="Computerworking">Computerworking</button>
+        <button class="loc-tab" data-store="Exito">Éxito</button>
+        <button class="loc-tab" data-store="Falabella">Falabella</button>
+      </div>
+      
+      <div class="location-display">
+        <div class="location-info">
+          <div class="loc-info-header">
+            <h3 id="loc-store-name">Alkosto</h3>
+            <span class="loc-status">Abierto ahora</span>
+          </div>
+          <ul class="loc-address-list" id="loc-address-list">
+            <!-- Addresses will be injected here -->
+          </ul>
+          <a href="#" id="loc-gmaps-link" target="_blank" class="loc-btn-maps">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Abrir en Google Maps
+          </a>
+        </div>
+        <div class="location-map">
+          <iframe 
+            id="loc-map-iframe"
+            src="" 
+            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+          </iframe>
+        </div>
+      </div>
     </div>
   </section>
 

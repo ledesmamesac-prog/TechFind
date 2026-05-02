@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const presetCat = params.get('cat');
   if (presetCat) activeCategories = [presetCat];
 
+  const presetStore = params.get('store');
+  if (presetStore) activeStores = [presetStore];
+
   await loadProducts();
   setupSearch();
   setupSort();
@@ -170,7 +173,7 @@ function buildStoreFilters() {
   container.innerHTML = '';
   stores.forEach(store => {
     const btn = document.createElement('button');
-    btn.className = 'chip';
+    btn.className = 'chip' + (activeStores.includes(store) ? ' active' : '');
     btn.textContent = store;
     btn.addEventListener('click', () => {
       btn.classList.toggle('active');
@@ -192,7 +195,7 @@ function applyFilters() {
   let filtered = allProducts.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(query) || p.store.toLowerCase().includes(query) || p.brand.toLowerCase().includes(query);
     const matchPrice = p.price <= priceMax;
-    const matchStore = activeStores.length === 0 || activeStores.includes(p.store);
+    const matchStore = activeStores.length === 0 || activeStores.some(as => as.toLowerCase() === p.store.toLowerCase());
     const matchCat = activeCategories.length === 0 || activeCategories.includes(p.category || 'otros');
     const matchSubcat = activeSubcategories.length === 0 || activeSubcategories.includes(p.subcategory || 'General');
     const matchBrand = activeBrands.length === 0 || activeBrands.includes(p.brand);
@@ -457,18 +460,43 @@ function showCompareModal() {
   if (compareList.length < 2) { alert('Selecciona al menos 2 productos.'); return; }
   const wrap = document.getElementById('compare-table-wrap');
   const minPrice = Math.min(...compareList.map(p => p.price));
-  let html = '<table class="compare-table"><thead><tr><th>Atributo</th>';
-  compareList.forEach(p => { html += `<th>${p.name}</th>`; });
-  html += '</tr></thead><tbody>';
-  html += '<tr><td>Precio</td>';
-  compareList.forEach(p => {
-    const best = p.price === minPrice ? ' class="price-cell best"' : ' class="price-cell"';
-    html += `<td${best}>$${Number(p.price).toLocaleString()}</td>`;
+  
+  let html = '<table class="compare-table"><thead><tr><th class="sticky-col">Atributo</th>';
+  compareList.forEach(p => { 
+    html += `<th>
+      <div class="modal-prod-header">
+        ${p.price === minPrice ? '<span class="best-badge">MEJOR PRECIO</span>' : ''}
+        <div class="modal-prod-img">${p.image ? `<img src="${p.image}" alt="${p.name}">` : catIcon(p.category, 30)}</div>
+        <div class="modal-prod-name">${p.name}</div>
+      </div>
+    </th>`; 
   });
-  html += '</tr><tr><td>Tienda</td>';
+  html += '</tr></thead><tbody>';
+  
+  // Price Row
+  html += '<tr><td class="sticky-col">Precio</td>';
+  compareList.forEach(p => {
+    const isBest = p.price === minPrice;
+    html += `<td class="${isBest ? 'best-price' : ''}">
+      <div class="price-val">$${Number(p.price).toLocaleString()}</div>
+      ${isBest ? '<div class="sketch-msg">¡Ahorras más aquí!</div>' : ''}
+    </td>`;
+  });
+
+  // Store Row
+  html += '</tr><tr><td class="sticky-col">Tienda</td>';
   compareList.forEach(p => { html += `<td>${p.store}</td>`; });
-  html += '</tr><tr><td>Enlace</td>';
-  compareList.forEach(p => { html += `<td><a href="${p.url}" target="_blank" style="color:#1A5FBF;font-size:11px">Ver →</a></td>`; });
+
+  // Rating Row
+  html += '</tr><tr><td class="sticky-col">Calificación</td>';
+  compareList.forEach(p => { html += `<td>${renderStarsHtml(p.rating) || 'N/A'}</td>`; });
+
+  // Link Row
+  html += '</tr><tr><td class="sticky-col">Acción</td>';
+  compareList.forEach(p => { 
+    html += `<td><a href="${p.url}" target="_blank" class="modal-buy-btn">Comprar →</a></td>`; 
+  });
+
   html += '</tr></tbody></table>';
   wrap.innerHTML = html;
   document.getElementById('compare-modal').style.display = 'flex';
