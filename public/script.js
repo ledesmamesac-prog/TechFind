@@ -2,13 +2,26 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await fetch('/api/summary');
-    const { categories, featured, storeCount } = await res.json();
+    const { categories, featured, storeCount, stores } = await res.json();
 
     // Hero stats
     const total = categories.reduce((s, c) => s + c.count, 0);
     document.getElementById('stat-total').textContent = total.toLocaleString();
     document.getElementById('stat-cats').textContent = categories.length;
     document.getElementById('stat-stores').textContent = storeCount || 0;
+
+    // Render stores in topbar
+    const topbarStores = document.getElementById('topbar-stores-list');
+    if (topbarStores && stores) {
+      topbarStores.innerHTML = stores.map(store => {
+        const lower = store.toLowerCase();
+        let badgeClass = 'store-badge';
+        if (lower.includes('exito') || lower.includes('éxito')) badgeClass += ' exito-badge';
+        else if (lower.includes('alkosto')) badgeClass += ' alkosto-badge';
+        // Add more default classes if needed
+        return `<span class="${badgeClass}">${store}</span>`;
+      }).join('');
+    }
 
     renderCategoryCards(categories);
     renderFeatured(featured);

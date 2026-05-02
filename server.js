@@ -228,10 +228,11 @@ app.get('/api/summary', async (req, res) => {
       featured.push(...items);
     });
 
-    // Store count
-    const storeCount = new Set(all.map(p => p.store)).size;
+    // Stores list
+    const stores = Array.from(new Set(all.map(p => p.store)));
+    const storeCount = stores.length;
 
-    res.json({ categories, featured: featured.slice(0, 12), storeCount });
+    res.json({ categories, featured: featured.slice(0, 12), storeCount, stores });
   } catch (err) {
     console.error('Error building summary:', err);
     res.status(500).json({ error: 'Failed to build summary' });
