@@ -31,7 +31,7 @@
 
 html,
 body {
-  height: 100%;
+  min-height: 100vh;
 }
 
 body {
@@ -579,6 +579,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: sticky;
+  top: 58px;
+  height: calc(100vh - 58px);
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-med);
+  border-radius: 4px;
 }
 
 .back-link-wrap {
@@ -603,6 +616,25 @@ body {
   text-transform: uppercase;
   color: var(--text-tertiary);
   margin-bottom: 10px;
+}
+
+#filter-group-subcategory {
+  animation: slideDown 0.2s ease-out both;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chip-group {
@@ -902,6 +934,34 @@ input[type="range"] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 12px;
+}
+
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.load-more-btn {
+  background: var(--surface);
+  border: 1px solid var(--border-med);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.load-more-btn:hover {
+  background: var(--bg);
+  border-color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* ══════════════════════════════
@@ -1244,4 +1304,40 @@ input[type="range"] {
 .compare-table .best {
   color: #1a7a1a;
   background: #eaf6ea;
+}
+
+/* ══════════════════════════════
+   BACK TO TOP BUTTON
+══════════════════════════════ */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  z-index: 99;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  background: var(--text-secondary);
+  transform: translateY(-3px);
 }

@@ -4,6 +4,7 @@ let allProducts = [];
 let compareList = [];
 let activeStores = [];
 let activeCategories = [];
+let activeSubcategories = [];
 let activeBrands = [];
 let onlyDiscounted = false;
 let maxPrice = 10000;
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCompareBar();
   setupModal();
   setupClearFilters();
+  setupBackToTop();
 });
 
 // ── FETCH ──
@@ -41,6 +43,7 @@ async function loadProducts() {
     }
 
     buildCategoryFilters();
+    buildSubcategoryFilters();
     buildStoreFilters();
     buildBrandFilters();
     applyFilters();
@@ -73,6 +76,8 @@ function buildCategoryFilters() {
       activeCategories = activeCategories.includes(cat)
         ? activeCategories.filter(c => c !== cat)
         : [...activeCategories, cat];
+      activeSubcategories = [];
+      buildSubcategoryFilters();
       updateCatTitleBar();
       applyFilters();
     });
@@ -98,6 +103,43 @@ function updateCatTitleBar() {
   } else {
     bar.style.display = 'none';
   }
+}
+
+// ── SUBCATEGORY FILTER CHIPS ──
+function buildSubcategoryFilters() {
+  const container = document.getElementById('filter-subcategory');
+  const group = document.getElementById('filter-group-subcategory');
+  
+  if (activeCategories.length === 0) {
+    group.style.display = 'none';
+    return;
+  }
+  
+  const validProducts = allProducts.filter(p => activeCategories.includes(p.category || 'otros'));
+  const subcats = [...new Set(validProducts.map(p => p.subcategory || 'General'))].sort();
+  
+  if (subcats.length <= 1) {
+    group.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = '';
+  subcats.forEach(sub => {
+    if (sub === 'General' && subcats.length > 1) return;
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (activeSubcategories.includes(sub) ? ' active' : '');
+    btn.textContent = sub;
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      activeSubcategories = activeSubcategories.includes(sub)
+        ? activeSubcategories.filter(s => s !== sub)
+        : [...activeSubcategories, sub];
+      applyFilters();
+    });
+    container.appendChild(btn);
+  });
+  
+  group.style.display = 'block';
 }
 
 // ── BRAND FILTER CHIPS ──
@@ -152,9 +194,10 @@ function applyFilters() {
     const matchPrice = p.price <= priceMax;
     const matchStore = activeStores.length === 0 || activeStores.includes(p.store);
     const matchCat = activeCategories.length === 0 || activeCategories.includes(p.category || 'otros');
+    const matchSubcat = activeSubcategories.length === 0 || activeSubcategories.includes(p.subcategory || 'General');
     const matchBrand = activeBrands.length === 0 || activeBrands.includes(p.brand);
     const matchDiscount = !onlyDiscounted || (p.originalPrice && p.originalPrice !== p.price);
-    return matchSearch && matchPrice && matchStore && matchCat && matchBrand && matchDiscount;
+    return matchSearch && matchPrice && matchStore && matchCat && matchSubcat && matchBrand && matchDiscount;
   });
 
   if (sort === 'price-asc')  filtered.sort((a, b) => a.price - b.price);
@@ -228,12 +271,38 @@ function renderProducts(products) {
       header.classList.toggle('collapsed', collapsed);
     });
 
-    items.forEach(product => {
-      catGrid.appendChild(makeCard(product, (idx++ * 0.02).toFixed(2)));
-    });
+    let displayedCount = 0;
+    const CHUNK_SIZE = 16;
+    let loadMoreBtn = null;
+
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'load-more-container';
+
+    function renderChunk() {
+      const chunk = items.slice(displayedCount, displayedCount + CHUNK_SIZE);
+      chunk.forEach(product => {
+        catGrid.appendChild(makeCard(product, ((displayedCount++) * 0.02).toFixed(2)));
+      });
+      
+      if (displayedCount < items.length) {
+        if (!loadMoreBtn) {
+          loadMoreBtn = document.createElement('button');
+          loadMoreBtn.className = 'load-more-btn';
+          loadMoreBtn.textContent = 'Ver más productos';
+          loadMoreBtn.addEventListener('click', renderChunk);
+          btnContainer.appendChild(loadMoreBtn);
+          section.appendChild(btnContainer);
+        }
+      } else if (loadMoreBtn) {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
+    renderChunk();
 
     section.appendChild(header);
     section.appendChild(catGrid);
+    if (loadMoreBtn) section.appendChild(btnContainer);
     grid.appendChild(section);
   });
 }
@@ -273,6 +342,7 @@ function makeCard(product, delay = 0) {
       ${discountTag}
     </div>
     <div class="card-name">${product.name}</div>
+    ${renderStarsHtml(product.rating)}
     ${formatPriceHtml(product)}
     <div class="card-actions">
       <a class="btn-view" href="${product.url}" target="_blank" rel="noopener">Ver producto</a>
@@ -326,7 +396,8 @@ function setupDiscountToggle() {
 function setupClearFilters() {
   document.getElementById('clear-filters').addEventListener('click', () => {
     document.getElementById('search-input').value = '';
-    activeStores = []; activeCategories = []; activeBrands = [];
+    activeStores = []; activeCategories = []; activeSubcategories = []; activeBrands = [];
+    document.getElementById('filter-group-subcategory').style.display = 'none';
     onlyDiscounted = false;
     document.getElementById('filter-discount').checked = false;
     document.querySelectorAll('.chip, .price-chip').forEach(c => c.classList.remove('active'));
@@ -335,6 +406,23 @@ function setupClearFilters() {
     document.getElementById('price-val').textContent = '$' + parseInt(range.max).toLocaleString();
     updateCatTitleBar();
     applyFilters();
+  });
+}
+
+function setupBackToTop() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+  
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
 

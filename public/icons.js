@@ -56,3 +56,21 @@ function catIcon(name, size = 20) {
   const svg = CAT_ICONS[name] || CAT_ICONS['otros'];
   return svg.replace(/width="20" height="20"/, `width="${size}" height="${size}"`);
 }
+
+function renderStarsHtml(rating) {
+  if (!rating) return '';
+  const num = parseFloat(rating);
+  if (isNaN(num)) return '';
+
+  let starsHtml = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= num) {
+      starsHtml += '<span style="color: #f59e0b;">★</span>';
+    } else if (i - 0.5 <= num) {
+      starsHtml += '<span style="color: #f59e0b;">★</span>';
+    } else {
+      starsHtml += '<span style="color: #4b5563;">★</span>';
+    }
+  }
+  return `<div class="product-rating" style="font-size: 1.15rem; margin-top: 0.2rem;" title="${num} de 5">${starsHtml} <span style="color: #9ca3af; font-size: 0.9rem; margin-left: 4px; position: relative; top: -1px;">(${num})</span></div>`;
+}

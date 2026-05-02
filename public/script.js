@@ -94,6 +94,7 @@ function renderFeatured(products) {
       <div class="feat-body">
         <span class="feat-store ${p.store === 'Alkosto' ? 'alkosto-badge' : 'exito-badge'}">${p.store}</span>
         <span class="feat-name">${p.name}</span>
+        ${renderStarsHtml(p.rating)}
         ${formatPriceHtml(p)}
       </div>
     `;

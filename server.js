@@ -7,10 +7,86 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
+let globalProductCache = [];
+let isCacheUpdating = false;
+
+async function updateProductCache() {
+  if (isCacheUpdating) return;
+  isCacheUpdating = true;
+  console.log('⏳ Updating product cache in background...');
+  try {
+    const data = await fetchAllProducts();
+    if (data && data.length > 0) {
+      globalProductCache = data;
+      console.log(`✅ Product cache updated. ${data.length} items loaded.`);
+    }
+  } catch (err) {
+    console.error('Failed to update cache:', err);
+  } finally {
+    isCacheUpdating = false;
+  }
+}
+
+async function getCachedProducts() {
+  if (globalProductCache.length === 0) {
+    await updateProductCache();
+  }
+  return globalProductCache;
+}
+
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log('Connected to MongoDB')).catch(err => console.error('MongoDB connection error:', err));
+}).then(() => {
+  console.log('Connected to MongoDB');
+  updateProductCache();
+  setInterval(updateProductCache, 30 * 60 * 1000); // 30 minutes
+}).catch(err => console.error('MongoDB connection error:', err));
+
+// ── Helper: Infer Subcategory from Title ──
+function inferSubcategory(cat, name) {
+  const n = (name || '').toLowerCase();
+  const c = (cat || '').toLowerCase();
+  
+  if (c === 'computadores') {
+    if (n.includes('portatil') || n.includes('portátil') || n.includes('laptop') || n.includes('macbook')) return 'Portátiles';
+    if (n.includes('monitor') || n.includes('pantalla')) return 'Monitores';
+    if (n.includes('mouse') || n.includes('teclado') || n.includes('diadema') || n.includes('audifonos')) return 'Periféricos';
+    if (n.includes('all in one') || n.includes('aio') || n.includes('todo en uno')) return 'All in One';
+    if (n.includes('impresora')) return 'Impresoras';
+    if (n.includes('escritorio') || n.includes('pc') || n.includes('torre')) return 'De Escritorio';
+    return 'Otros Computadores';
+  }
+  if (c === 'celulares') {
+    if (n.includes('reloj') || n.includes('smartwatch') || n.includes('band') || n.includes('apple watch')) return 'Smartwatches';
+    if (n.includes('audifonos') || n.includes('auriculares') || n.includes('airpods') || n.includes('buds')) return 'Audio';
+    if (n.includes('funda') || n.includes('carcasa') || n.includes('cargador') || n.includes('cable') || n.includes('estuche')) return 'Accesorios';
+    return 'Smartphones';
+  }
+  if (c === 'audio') {
+    if (n.includes('audifono') || n.includes('auricular') || n.includes('diadema') || n.includes('airpods') || n.includes('buds')) return 'Audífonos';
+    if (n.includes('parlante') || n.includes('bocina') || n.includes('soundbar') || n.includes('barra')) return 'Parlantes';
+    return 'Equipos de sonido';
+  }
+  if (c === 'tablets') {
+    if (n.includes('ipad')) return 'iPads';
+    if (n.includes('galaxy tab')) return 'Galaxy Tabs';
+    if (n.includes('funda') || n.includes('teclado') || n.includes('pencil') || n.includes('lápiz')) return 'Accesorios';
+    return 'Otras Tablets';
+  }
+  if (c === 'pantallas' || c === 'televisores' || c === 'tv') {
+    if (n.includes('soporte') || n.includes('base') || n.includes('cable')) return 'Accesorios TV';
+    if (n.includes('oled') || n.includes('qled')) return 'Premium TV';
+    return 'Televisores';
+  }
+  if (c === 'consolas' || c === 'videojuegos') {
+    if (n.includes('ps5') || n.includes('playstation 5') || n.includes('xbox') || n.includes('nintendo switch') || n.includes('consola')) return 'Consolas';
+    if (n.includes('control') || n.includes('mando') || n.includes('joy-con')) return 'Controles';
+    if (n.includes('juego') || n.includes('game')) return 'Juegos';
+    return 'Accesorios Gaming';
+  }
+  return 'General';
+}
 
 // ── Helper: fetch & normalize all products from exito + alkosto ──
 async function fetchAllProducts() {
@@ -82,6 +158,8 @@ async function fetchAllProducts() {
               }
             }
 
+            const finalCategory = doc.categoria || col.name;
+
             allProducts.push({
               _id: doc._id.toString(),
               name: doc.nombre,
@@ -91,8 +169,10 @@ async function fetchAllProducts() {
               brand: doc.marca || 'Genérico',
               store: storeName,
               url: doc.enlace_normalized || doc.enlace,
-              category: doc.categoria || col.name,
-              image: imageUrl
+              category: finalCategory,
+              subcategory: inferSubcategory(finalCategory, doc.nombre),
+              image: imageUrl,
+              rating: doc.calificacion || doc.rating || doc.estrellas || null
             });
           }
         }
@@ -108,7 +188,7 @@ async function fetchAllProducts() {
 // ── GET /api/summary — lobby data ──
 app.get('/api/summary', async (req, res) => {
   try {
-    const all = await fetchAllProducts();
+    const all = await getCachedProducts();
 
     const CAT_ORDER = ['computadores', 'celulares', 'tablets', 'pantallas', 'audio', 'consolas', 'impresoras', 'otros'];
 
@@ -162,7 +242,7 @@ app.get('/api/summary', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const { category, store } = req.query;
-    let all = await fetchAllProducts();
+    let all = await getCachedProducts();
 
     if (category) all = all.filter(p => p.category === category);
     if (store) all = all.filter(p => p.store.toLowerCase() === store.toLowerCase());
