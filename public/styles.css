@@ -123,19 +123,52 @@ body {
   border-radius: 20px;
   letter-spacing: .04em;
   text-transform: uppercase;
+  border: 0.5px solid var(--border-med);
+  background: var(--surface);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .exito-badge {
   background: var(--exito-light);
   color: #a06b00;
-  border: 0.5px solid rgba(245, 168, 0, 0.3);
+  border-color: rgba(245, 168, 0, 0.3);
 }
 
 .alkosto-badge {
   background: var(--alkosto-light);
   color: var(--alkosto);
-  border: 0.5px solid rgba(232, 33, 43, 0.2);
+  border-color: rgba(232, 33, 43, 0.2);
 }
+
+.compulago-badge {
+  color: #333;
+  border-color: transparent;
+  background: transparent;
+}
+
+.computerworking-badge {
+  color: #333;
+  border-color: transparent;
+  background: transparent;
+}
+
+.falabella-badge {
+  color: #333;
+  border-color: transparent;
+  background: transparent;
+}
+
+.default-badge {
+  color: #333;
+  border-color: transparent;
+  background: transparent;
+}
+
+/* En tarjetas con imagen o fondo oscuro, quiza necesiten un fondito, 
+   pero según la imagen del usuario son texto plano negro sin fondo. */
 
 /* Search bar (category page) */
 .topbar-search {
@@ -465,12 +498,6 @@ body {
 
 .feat-store {
   align-self: flex-start;
-  font-size: 9px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 20px;
-  letter-spacing: .04em;
-  text-transform: uppercase;
 }
 
 .feat-name {
@@ -1035,15 +1062,6 @@ input[type="range"] {
   position: absolute;
   top: 7px;
   right: 7px;
-  font-size: 9px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--surface);
-  border: 0.5px solid var(--border-med);
-  color: var(--text-secondary);
-  letter-spacing: .04em;
-  text-transform: uppercase;
 }
 
 .card-name {

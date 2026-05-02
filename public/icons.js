@@ -74,3 +74,14 @@ function renderStarsHtml(rating) {
   }
   return `<div class="product-rating" style="font-size: 1.15rem; margin-top: 0.2rem;" title="${num} de 5">${starsHtml} <span style="color: #9ca3af; font-size: 0.9rem; margin-left: 4px; position: relative; top: -1px;">(${num})</span></div>`;
 }
+
+function getStoreBadgeClass(store) {
+  const lower = store.toLowerCase();
+  let base = 'store-badge';
+  if (lower.includes('exito') || lower.includes('éxito')) return base + ' exito-badge';
+  if (lower.includes('alkosto')) return base + ' alkosto-badge';
+  if (lower.includes('compulago')) return base + ' compulago-badge';
+  if (lower.includes('computerworking')) return base + ' computerworking-badge';
+  if (lower.includes('falabella')) return base + ' falabella-badge';
+  return base + ' default-badge';
+}

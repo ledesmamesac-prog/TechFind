@@ -258,6 +258,17 @@ app.get('/api/products', async (req, res) => {
 // Alias for backwards compatibility
 app.get('/products', (req, res) => res.redirect('/api/products'));
 
+// ── GET /api/refresh-cache ──
+app.get('/api/refresh-cache', async (req, res) => {
+  try {
+    await updateProductCache();
+    res.json({ success: true, message: 'Caché actualizada manualmente', productCount: globalProductCache.length });
+  } catch (err) {
+    console.error('Error refreshing cache:', err);
+    res.status(500).json({ error: 'Failed to refresh cache' });
+  }
+});
+
 // ── GET /databases ──
 app.get('/databases', async (req, res) => {
   try {

@@ -338,7 +338,7 @@ function makeCard(product, delay = 0) {
   card.innerHTML = `
     <div class="card-img-box">
       ${imgContent}${svgFallback}
-      <span class="card-store">${product.store}</span>
+      <span class="card-store ${getStoreBadgeClass(product.store)}">${product.store}</span>
       ${discountTag}
     </div>
     <div class="card-name">${product.name}</div>

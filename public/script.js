@@ -14,12 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const topbarStores = document.getElementById('topbar-stores-list');
     if (topbarStores && stores) {
       topbarStores.innerHTML = stores.map(store => {
-        const lower = store.toLowerCase();
-        let badgeClass = 'store-badge';
-        if (lower.includes('exito') || lower.includes('éxito')) badgeClass += ' exito-badge';
-        else if (lower.includes('alkosto')) badgeClass += ' alkosto-badge';
-        // Add more default classes if needed
-        return `<span class="${badgeClass}">${store}</span>`;
+        return `<span class="${getStoreBadgeClass(store)}">${store}</span>`;
       }).join('');
     }
 
@@ -105,7 +100,7 @@ function renderFeatured(products) {
         ${discountTag}
       </div>
       <div class="feat-body">
-        <span class="feat-store ${p.store === 'Alkosto' ? 'alkosto-badge' : 'exito-badge'}">${p.store}</span>
+        <span class="feat-store ${getStoreBadgeClass(p.store)}">${p.store}</span>
         <span class="feat-name">${p.name}</span>
         ${renderStarsHtml(p.rating)}
         ${formatPriceHtml(p)}
