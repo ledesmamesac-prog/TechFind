@@ -57,16 +57,3 @@ jobs:
           app-name: 'TechFind'
           slot-name: 'Production'
           package: .
-      
-      - name: Asegurar que la App esté encendida
-        uses: azure/CLI@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az appservice plan update \
-              --name ASP-TechFind-920a \
-              --resource-group TechFind \
-              --number-of-workers 3
-            az webapp start \
-              --name TechFind \
-              --resource-group TechFind
