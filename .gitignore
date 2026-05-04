@@ -37,3 +37,4 @@ build/
 
 # Firebase Admin Service Account Key
 serviceAccountKey.json
+techfind-*.json
