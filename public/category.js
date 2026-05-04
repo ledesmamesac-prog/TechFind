@@ -1,4 +1,9 @@
 // ── category.js — Products page ──
+import { catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
+import { initProfile } from "./profile.js";
+
+// Initialize Profile Modal & Auth State
+initProfile();
 
 let allProducts = [];
 let compareList = [];

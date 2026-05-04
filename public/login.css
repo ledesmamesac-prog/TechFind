@@ -1,0 +1,428 @@
+/* =====================================================
+   TechFind — Login Styles
+   ===================================================== */
+
+/* ── Variables ─────────────────────────────────────── */
+:root {
+  --color-bg: #F5F5F2;
+  --color-surface: #ffffff;
+  --color-border: #D1D1CD;
+  --color-border-subtle: #EDEDEB;
+  --color-primary: #0035C5;
+  --color-primary-dark: #0047FF;
+  --color-text: #191B25;
+  --color-text-secondary: #5e5e5e;
+  --color-text-muted: #747688;
+  --color-placeholder: #b0b0b0;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --radius: 0;
+  --transition: 150ms ease;
+}
+
+/* ── Background Cascade ────────────────────────────── */
+.cascade-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: flex;
+  gap: 20px;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  padding: 0 20px;
+}
+
+.cascade-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* Remove gap to avoid sub-pixel jump during loop */
+  gap: 0;
+  height: max-content;
+  will-change: transform;
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.cascade-column:last-child {
+  border-right: none;
+}
+
+/* Use different animations based on direction */
+.cascade-column[style*="--direction: -50%"] {
+  animation: cascade-up var(--speed) linear infinite;
+}
+
+.cascade-column[style*="--direction: 50%"] {
+  animation: cascade-down var(--speed) linear infinite;
+}
+
+@keyframes cascade-up {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes cascade-down {
+  0% {
+    transform: translateY(-50%);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.cascade-column img {
+  width: 60%;
+  flex-shrink: 0;
+  align-self: center;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  filter: grayscale(0%) contrast(1.1);
+  opacity: 0.8;
+  border-radius: 12px;
+  /* Use margin-bottom instead of gap for perfect looping */
+  margin-bottom: 20px;
+}
+
+/* ── Reset & Base ──────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  font-family: var(--font-body);
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Material Symbols ──────────────────────────────── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 22px;
+}
+
+/* ── Header / TopBar ───────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--color-bg);
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.topbar__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 10px;
+  max-width: none;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.icon-help {
+  color: var(--color-primary-dark);
+  cursor: pointer;
+}
+
+/* ── Main ──────────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 48px;
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 480px;
+
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+  z-index: 10;
+}
+
+/* ── Card Header ───────────────────────────────────── */
+.card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card__brand {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.card__subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Form ──────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Field ─────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field__label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.field__input {
+  width: 100%;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  outline: none;
+  border-radius: 0;
+  transition: border-color var(--transition);
+  appearance: none;
+}
+
+.field__input::placeholder {
+  color: var(--color-placeholder);
+  font-weight: 400;
+}
+
+.field__input:focus {
+  border-color: var(--color-primary-dark);
+}
+
+/* ── Submit Button ─────────────────────────────────── */
+.form__submit {
+  margin-top: 8px;
+}
+
+.btn-primary {
+  width: 100%;
+  background-color: var(--color-primary-dark);
+  color: #ffffff;
+  border: none;
+  padding: 16px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color var(--transition), opacity var(--transition);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary);
+}
+
+.btn-primary:active {
+  opacity: 0.8;
+}
+
+/* ── Google Button ─────────────────────────────────── */
+.form__divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0;
+}
+
+.form__divider::before,
+.form__divider::after {
+  content: "";
+  flex: 1;
+  height: 0.5px;
+  background-color: var(--color-border);
+}
+
+.form__divider span {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.btn-google {
+  width: 100%;
+  background-color: #ffffff;
+  color: var(--color-text);
+  border: 0.5px solid var(--color-border);
+  padding: 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.btn-google:hover {
+  background-color: #f9f9f9;
+  border-color: var(--color-text-muted);
+}
+
+.btn-google img {
+  flex-shrink: 0;
+}
+
+/* ── Card Links ────────────────────────────────────── */
+.card__links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--color-border-subtle);
+}
+
+.link {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ── Swiss Accent ──────────────────────────────────── */
+.accent {
+  position: fixed;
+  bottom: 48px;
+  right: 48px;
+  font-family: var(--font-display);
+  font-size: 120px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #000000;
+  opacity: 0.05;
+  user-select: none;
+  pointer-events: none;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .accent {
+    display: block;
+  }
+}
+
+
+
+@media (min-width: 768px) {
+  .footer__inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.footer__copy {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.footer__nav {
+  display: flex;
+  gap: 32px;
+}
+
+.footer__link {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer__link:hover {
+  color: var(--color-primary-dark);
+}

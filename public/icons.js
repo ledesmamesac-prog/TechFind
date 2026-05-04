@@ -1,7 +1,7 @@
 // ── icons.js — SVG icon library (stroke-based, 20×20 viewBox) ──
 // Usage: CAT_ICONS['computadores']  →  '<svg …>…</svg>'
 
-const CAT_ICONS = {
+export const CAT_ICONS = {
   computadores: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <rect x="2" y="4" width="20" height="13" rx="2"/>
     <path d="M8 21h8M12 17v4"/>
@@ -52,12 +52,12 @@ const CAT_ICONS = {
   </svg>`
 };
 
-function catIcon(name, size = 20) {
+export function catIcon(name, size = 20) {
   const svg = CAT_ICONS[name] || CAT_ICONS['otros'];
   return svg.replace(/width="20" height="20"/, `width="${size}" height="${size}"`);
 }
 
-function renderStarsHtml(rating) {
+export function renderStarsHtml(rating) {
   if (!rating) return '';
   const num = parseFloat(rating);
   if (isNaN(num)) return '';
@@ -75,8 +75,8 @@ function renderStarsHtml(rating) {
   return `<div class="product-rating" style="font-size: 1.15rem; margin-top: 0.2rem;" title="${num} de 5">${starsHtml} <span style="color: #9ca3af; font-size: 0.9rem; margin-left: 4px; position: relative; top: -1px;">(${num})</span></div>`;
 }
 
-function getStoreBadgeClass(store) {
-  const lower = store.toLowerCase();
+export function getStoreBadgeClass(store) {
+  const lower = (store || '').toLowerCase();
   let base = 'store-badge';
   if (lower.includes('exito') || lower.includes('éxito')) return base + ' exito-badge';
   if (lower.includes('alkosto')) return base + ' alkosto-badge';

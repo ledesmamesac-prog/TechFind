@@ -4,6 +4,33 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Import Firebase Admin SDK
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin
+const serviceAccount = require('./techfind-72d4a-firebase-adminsdk-fbsvc-51b821adb7.json'); 
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+// Middleware para verificar tokens de Firebase
+const verifyFirebaseToken = async (req, res, next) => {
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
+
+  if (!idToken) {
+    return res.status(401).send('No se proporcionó un token.');
+  }
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    res.status(401).send('Token inválido.');
+  }
+};
+
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -305,6 +332,11 @@ app.get('/api/proxy-image', async (req, res) => {
     console.error('Proxy Error:', err.message);
     res.status(500).send('Error proxying image');
   }
+});
+
+// Ruta protegida de ejemplo
+app.get('/protected', verifyFirebaseToken, (req, res) => {
+  res.send(`Bienvenido, ${req.user.email}`);
 });
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

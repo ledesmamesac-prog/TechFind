@@ -22,6 +22,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Firebase configuration and initialization
+import { analytics } from "./firebase-config.js";
+import { catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
+import { initProfile } from "./profile.js";
+
+// Initialize Profile Modal & Auth State
+initProfile();
+
 // ── CATEGORY CARDS ──
 function renderCategoryCards(categories) {
   const grid = document.getElementById('cat-cards-grid');
@@ -107,7 +115,6 @@ function renderFeatured(products) {
   });
 }
 
-// ... (dentro de script.js)
 
 const STORE_LOCATIONS = {
   'Exito': {
