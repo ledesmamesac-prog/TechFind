@@ -8,9 +8,6 @@ on:
     branches:
       - main
   workflow_dispatch:
-  schedule:
-    - cron: '0 19 * * *'   # Abre a las 2:00pm Colombia
-    - cron: '0 23 * * *'   # Cierra a las 6:00pm Colombia
 
 jobs:
   build:
@@ -60,18 +57,8 @@ jobs:
           app-name: 'TechFind'
           slot-name: 'Production'
           package: .
-
-  start-app:
-    if: github.event.schedule == '0 19 * * *'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1555D6D8A1C04D3182E03B9BF3CDC144 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DFC2E522F4347BDA9D5A59C54D1C906 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_86D4916F2D8B49FDA9B6A1C68B763B03 }}
-      - name: Iniciar App Service con 3 workers
+      
+      - name: Asegurar que la App esté encendida
         uses: azure/CLI@v2
         with:
           azcliversion: latest
@@ -83,26 +70,3 @@ jobs:
             az webapp start \
               --name TechFind \
               --resource-group TechFind
-
-  stop-app:
-    if: github.event.schedule == '0 23 * * *'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1555D6D8A1C04D3182E03B9BF3CDC144 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DFC2E522F4347BDA9D5A59C54D1C906 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_86D4916F2D8B49FDA9B6A1C68B763B03 }}
-      - name: Detener App Service y bajar workers
-        uses: azure/CLI@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az webapp stop \
-              --name TechFind \
-              --resource-group TechFind
-            az appservice plan update \
-              --name ASP-TechFind-920a \
-              --resource-group TechFind \
-              --number-of-workers 0
