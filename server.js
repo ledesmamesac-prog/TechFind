@@ -8,11 +8,23 @@ const PORT = process.env.PORT || 3000;
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin
-const serviceAccount = require('./techfind-72d4a-firebase-adminsdk-fbsvc-51b821adb7.json'); 
+let serviceAccount;
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+try {
+  serviceAccount = require('./techfind-72d4a-firebase-adminsdk-fbsvc-51b821adb7.json');
+} catch (e) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    console.error("Firebase Service Account not found.");
+  }
+}
+
+if (serviceAccount) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
 
 // Middleware para verificar tokens de Firebase
 const verifyFirebaseToken = async (req, res, next) => {
