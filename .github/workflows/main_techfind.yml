@@ -57,3 +57,4 @@ jobs:
           app-name: 'TechFind'
           slot-name: 'Production'
           package: .
+ 
