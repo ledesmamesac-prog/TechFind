@@ -155,10 +155,13 @@ async function fetchAllProducts() {
           if (typeof rawPrice === 'number') {
             priceNum = rawPrice;
           } else if (typeof rawPrice === 'string') {
-            // Remove everything except numbers (currency symbols, spaces, "COP", etc)
-            const cleaned = rawPrice.replace(/[^0-9]/g, '');
-            priceNum = parseInt(cleaned) || 0;
+            // Take only the first sequence of numbers (to avoid SKU concatenation)
+            const match = rawPrice.replace(/[.,]/g, '').match(/\d+/);
+            priceNum = match ? parseInt(match[0]) : 0;
           }
+
+          // Safety cap: ignore prices above 100 million as they are likely errors
+          if (priceNum > 100000000) priceNum = 0;
 
           // Fallback check: if doc.precio was "Precio no disponible", 
           // we might have skipped it if we only checked doc.precio.

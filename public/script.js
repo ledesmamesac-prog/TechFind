@@ -1,5 +1,6 @@
 // ── lobby script.js ──
 document.addEventListener('DOMContentLoaded', async () => {
+  setupProductDetailModal();
   try {
     const res = await fetch('/api/summary');
     const { categories, featured, storeCount, stores } = await res.json();
@@ -10,25 +11,146 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stat-cats').textContent = categories.length;
     document.getElementById('stat-stores').textContent = storeCount || 0;
 
-    // Render stores in topbar is now static in HTML
-
     renderCategoryCards(categories);
     renderFeatured(featured);
-
-    // Initialize locations section
     setupLocationTabs();
+
+    // Background fetch all products for the similar products logic
+    fetch('/api/products').then(r => r.json()).then(data => {
+      allProducts = data;
+    });
+
   } catch (err) {
     console.error('Error loading summary:', err);
   }
 });
 
 // Firebase configuration and initialization
-import { analytics } from "./firebase-config.js";
-import { catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
-import { initProfile } from "./profile.js";
+import { initProfile, toggleFavorite, isFavorite } from "./profile.js";
+import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
 
 // Initialize Profile Modal & Auth State
 initProfile();
+
+let allProducts = []; // To store featured or similar for modal
+
+// ── PRODUCT DETAIL MODAL ──
+function showProductDetails(product) {
+  const overlay = document.getElementById('product-detail-modal-overlay');
+  const modal = document.getElementById('product-detail-modal');
+  
+  document.getElementById('pd-img-box').innerHTML = product.image 
+    ? `<img src="${product.image}" alt="${product.name}">` 
+    : catIcon(product.category, 100);
+  
+  const storeBadge = document.getElementById('pd-store');
+  storeBadge.className = 'pd-store-badge ' + getStoreBadgeClass(product.store);
+  storeBadge.textContent = product.store;
+  
+  document.getElementById('pd-title').textContent = product.name;
+  document.getElementById('pd-rating').innerHTML = renderStarsHtml(product.rating);
+  
+  const oldPriceEl = document.getElementById('pd-price-old');
+  const newPriceEl = document.getElementById('pd-price-new');
+  const discPctEl = document.getElementById('pd-discount-pct');
+  
+  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  if (hasDiscount) {
+    oldPriceEl.style.display = 'block';
+    oldPriceEl.textContent = `$${Number(product.originalPrice).toLocaleString()}`;
+    const pct = Math.round((1 - (product.price / product.originalPrice)) * 100);
+    discPctEl.style.display = 'inline-block';
+    discPctEl.textContent = `-${pct}%`;
+  } else {
+    oldPriceEl.style.display = 'none';
+    discPctEl.style.display = 'none';
+  }
+  
+  newPriceEl.textContent = `$${Number(product.price).toLocaleString()}`;
+  
+  const buyBtn = document.getElementById('pd-buy-btn');
+  buyBtn.href = product.url;
+  
+  const favBtn = document.getElementById('pd-fav-btn');
+  const favIcon = document.getElementById('pd-fav-icon');
+  
+  function updateFavBtn() {
+    const active = isFavorite(product._id);
+    favBtn.classList.toggle('active', active);
+    favIcon.innerHTML = active ? CAT_ICONS.heartFilled : CAT_ICONS.heart;
+  }
+  updateFavBtn();
+  
+  favBtn.onclick = async (e) => {
+    e.stopPropagation();
+    const success = await toggleFavorite(product);
+    if (success) updateFavBtn();
+  };
+
+  renderSimilarProducts(product);
+
+  overlay.style.display = 'block';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function renderSimilarProducts(current) {
+  const grid = document.getElementById('pd-similar-grid');
+  grid.innerHTML = '';
+  const similar = allProducts
+    .filter(p => p._id !== current._id && p.category === current.category)
+    .slice(0, 12);
+    
+  similar.forEach(p => {
+    const card = makeFeaturedCard(p);
+    grid.appendChild(card);
+  });
+}
+
+function setupProductDetailModal() {
+  const overlay = document.getElementById('product-detail-modal-overlay');
+  const modal = document.getElementById('product-detail-modal');
+  const close = document.getElementById('close-pd-modal');
+  const closeModal = () => {
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+  if (close) close.onclick = closeModal;
+  if (overlay) overlay.onclick = closeModal;
+}
+
+function makeFeaturedCard(p, i = 0) {
+  const card = document.createElement('div');
+  card.className = 'featured-card';
+  card.style.animationDelay = `${i * 0.05}s`;
+  card.style.cursor = 'pointer';
+
+  const fallbackIcon = catIcon(p.category, 36);
+  const imgContent = p.image
+    ? `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const svgFallback = `<span class="feat-placeholder" style="${p.image ? 'display:none' : ''}">${fallbackIcon}</span>`;
+
+  const discountTag = (p.discount || (p.originalPrice && p.originalPrice > p.price))
+    ? `<span class="feat-discount">${p.discount || 'OFERTA'}</span>`
+    : '';
+
+  card.innerHTML = `
+    <div class="feat-img">
+      ${imgContent}${svgFallback}
+      ${discountTag}
+    </div>
+    <div class="feat-body">
+      <span class="feat-store ${getStoreBadgeClass(p.store)}">${p.store}</span>
+      <span class="feat-name">${p.name}</span>
+      ${renderStarsHtml(p.rating)}
+      ${formatPriceHtml(p)}
+    </div>
+  `;
+  card.onclick = () => showProductDetails(p);
+  return card;
+}
 
 // ── CATEGORY CARDS ──
 function renderCategoryCards(categories) {
@@ -80,38 +202,8 @@ function formatPriceHtml(p) {
 function renderFeatured(products) {
   const grid = document.getElementById('featured-grid');
   grid.innerHTML = '';
-
   products.forEach((p, i) => {
-    const card = document.createElement('a');
-    card.className = 'featured-card';
-    card.href = p.url;
-    card.target = '_blank';
-    card.rel = 'noopener';
-    card.style.animationDelay = `${i * 0.05}s`;
-
-    const fallbackIcon = catIcon(p.category, 36);
-    const imgContent = p.image
-      ? `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-      : '';
-    const svgFallback = `<span class="feat-placeholder" style="${p.image ? 'display:none' : ''}">${fallbackIcon}</span>`;
-
-    const discountTag = (p.discount || (p.originalPrice && p.originalPrice > p.price))
-      ? `<span class="feat-discount">${p.discount || 'OFERTA'}</span>`
-      : '';
-
-    card.innerHTML = `
-      <div class="feat-img">
-        ${imgContent}${svgFallback}
-        ${discountTag}
-      </div>
-      <div class="feat-body">
-        <span class="feat-store ${getStoreBadgeClass(p.store)}">${p.store}</span>
-        <span class="feat-name">${p.name}</span>
-        ${renderStarsHtml(p.rating)}
-        ${formatPriceHtml(p)}
-      </div>
-    `;
-    grid.appendChild(card);
+    grid.appendChild(makeFeaturedCard(p, i));
   });
 }
 

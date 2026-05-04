@@ -1,6 +1,5 @@
-// ── category.js — Products page ──
-import { catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
-import { initProfile } from "./profile.js";
+import { initProfile, toggleFavorite, isFavorite } from "./profile.js";
+import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
 
 // Initialize Profile Modal & Auth State
 initProfile();
@@ -31,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupDiscountToggle();
   setupCompareBar();
   setupModal();
+  setupProductDetailModal();
   setupClearFilters();
   setupBackToTop();
 });
@@ -42,7 +42,9 @@ async function loadProducts() {
     allProducts = await res.json();
 
     if (allProducts.length > 0) {
-      const max = Math.max(...allProducts.map(p => p.price));
+      // Filter out prices that are likely errors (e.g., > 100 million)
+      const reasonablePrices = allProducts.map(p => p.price).filter(p => p < 100000000);
+      const max = reasonablePrices.length > 0 ? Math.max(...reasonablePrices) : 10000000;
       maxPrice = Math.ceil(max / 1000) * 1000;
       const range = document.getElementById('price-range');
       range.max = maxPrice;
@@ -211,6 +213,13 @@ function applyFilters() {
   if (sort === 'price-asc')  filtered.sort((a, b) => a.price - b.price);
   else if (sort === 'price-desc') filtered.sort((a, b) => b.price - a.price);
   else if (sort === 'name-asc')   filtered.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'discount-desc') {
+    filtered.sort((a, b) => {
+      const discA = a.originalPrice ? (a.originalPrice - a.price) / a.originalPrice : 0;
+      const discB = b.originalPrice ? (b.originalPrice - b.price) / b.originalPrice : 0;
+      return discB - discA;
+    });
+  }
 
   renderProducts(filtered);
 }
@@ -334,6 +343,8 @@ function makeCard(product, delay = 0) {
   card.style.animationDelay = `${delay}s`;
 
   const inCompare = compareList.find(p => p._id === product._id);
+  const favorited = isFavorite(product._id);
+
   const imgContent = product.image
     ? `<img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : '';
@@ -348,18 +359,38 @@ function makeCard(product, delay = 0) {
       ${imgContent}${svgFallback}
       <span class="card-store ${getStoreBadgeClass(product.store)}">${product.store}</span>
       ${discountTag}
+      <button class="card-fav-btn ${favorited ? 'active' : ''}" title="Añadir a favoritos">
+        ${favorited ? CAT_ICONS.heartFilled : CAT_ICONS.heart}
+      </button>
     </div>
     <div class="card-name">${product.name}</div>
     ${renderStarsHtml(product.rating)}
     ${formatPriceHtml(product)}
     <div class="card-actions">
-      <a class="btn-view" href="${product.url}" target="_blank" rel="noopener">Ver producto</a>
+      <a class="btn-view" href="${product.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Ver producto</a>
       <button class="btn-compare ${inCompare ? 'active' : ''}" data-id="${product._id}">
         ${inCompare ? '✓ Comparar' : '+ Comparar'}
       </button>
     </div>
   `;
-  card.querySelector('.btn-compare').addEventListener('click', () => toggleCompare(product));
+  
+  card.onclick = () => showProductDetails(product);
+
+  card.querySelector('.btn-compare').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleCompare(product);
+  });
+  
+  const favBtn = card.querySelector('.card-fav-btn');
+  favBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const success = await toggleFavorite(product);
+    if (success) {
+      applyFilters(); // Re-render to update heart state
+    }
+  });
+
   return card;
 }
 
@@ -432,6 +463,103 @@ function setupBackToTop() {
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+}
+
+// ── PRODUCT DETAIL MODAL ──
+function showProductDetails(product) {
+  const overlay = document.getElementById('product-detail-modal-overlay');
+  const modal = document.getElementById('product-detail-modal');
+  
+  // Fill content
+  document.getElementById('pd-img-box').innerHTML = product.image 
+    ? `<img src="${product.image}" alt="${product.name}">` 
+    : catIcon(product.category, 100);
+  
+  const storeBadge = document.getElementById('pd-store');
+  storeBadge.className = 'pd-store-badge ' + getStoreBadgeClass(product.store);
+  storeBadge.textContent = product.store;
+  
+  document.getElementById('pd-title').textContent = product.name;
+  document.getElementById('pd-rating').innerHTML = renderStarsHtml(product.rating);
+  
+  const oldPriceEl = document.getElementById('pd-price-old');
+  const newPriceEl = document.getElementById('pd-price-new');
+  const discPctEl = document.getElementById('pd-discount-pct');
+  
+  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+  if (hasDiscount) {
+    oldPriceEl.style.display = 'block';
+    oldPriceEl.textContent = `$${Number(product.originalPrice).toLocaleString()}`;
+    const pct = Math.round((1 - (product.price / product.originalPrice)) * 100);
+    discPctEl.style.display = 'inline-block';
+    discPctEl.textContent = `-${pct}%`;
+  } else {
+    oldPriceEl.style.display = 'none';
+    discPctEl.style.display = 'none';
+  }
+  
+  newPriceEl.textContent = `$${Number(product.price).toLocaleString()}`;
+  
+  const buyBtn = document.getElementById('pd-buy-btn');
+  buyBtn.href = product.url;
+  
+  const favBtn = document.getElementById('pd-fav-btn');
+  const favIcon = document.getElementById('pd-fav-icon');
+  
+  function updateFavBtn() {
+    const active = isFavorite(product._id);
+    favBtn.classList.toggle('active', active);
+    favIcon.innerHTML = active ? CAT_ICONS.heartFilled : CAT_ICONS.heart;
+  }
+  updateFavBtn();
+  
+  favBtn.onclick = async (e) => {
+    e.stopPropagation();
+    const success = await toggleFavorite(product);
+    if (success) {
+      updateFavBtn();
+      applyFilters(); // Update hearts in grid
+    }
+  };
+
+  // Similar products
+  renderSimilarProducts(product);
+
+  // Show
+  overlay.style.display = 'block';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function renderSimilarProducts(current) {
+  const grid = document.getElementById('pd-similar-grid');
+  grid.innerHTML = '';
+  
+  const similar = allProducts
+    .filter(p => p._id !== current._id && p.category === current.category)
+    .sort((a, b) => Math.abs(a.price - current.price) - Math.abs(b.price - current.price))
+    .slice(0, 12);
+    
+  similar.forEach(p => {
+    const card = makeCard(p);
+    card.classList.add('similar-card');
+    grid.appendChild(card);
+  });
+}
+
+function setupProductDetailModal() {
+  const overlay = document.getElementById('product-detail-modal-overlay');
+  const modal = document.getElementById('product-detail-modal');
+  const close = document.getElementById('close-pd-modal');
+  
+  const closeModal = () => {
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+  
+  if (close) close.onclick = closeModal;
+  if (overlay) overlay.onclick = closeModal;
 }
 
 // ── COMPARE ──
