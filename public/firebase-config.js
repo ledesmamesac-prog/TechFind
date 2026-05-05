@@ -6,7 +6,9 @@ import {
   signInWithPopup, 
   createUserWithEmailAndPassword, 
   onAuthStateChanged,
-  signOut 
+  signOut,
+  setPersistence,
+  browserSessionPersistence 
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { 
   getFirestore, 
@@ -42,6 +44,8 @@ export {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
+  setPersistence,
+  browserSessionPersistence,
   doc,
   setDoc,
   getDoc

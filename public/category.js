@@ -1,4 +1,5 @@
 import { initProfile, toggleFavorite, isFavorite } from "./profile.js";
+window.showProductDetails = null;
 import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
 
 // Initialize Profile Modal & Auth State
@@ -87,7 +88,9 @@ function buildCategoryFilters() {
         ? activeCategories.filter(c => c !== cat)
         : [...activeCategories, cat];
       activeSubcategories = [];
+      activeBrands = []; // Clear brands when category changes to keep it clean
       buildSubcategoryFilters();
+      buildBrandFilters();
       updateCatTitleBar();
       applyFilters();
     });
@@ -154,13 +157,27 @@ function buildSubcategoryFilters() {
 
 // ── BRAND FILTER CHIPS ──
 function buildBrandFilters() {
-  const brands = [...new Set(allProducts.map(p => p.brand))].sort();
   const container = document.getElementById('filter-brand');
+  
+  // Filter products by active categories first
+  const filteredProducts = activeCategories.length > 0 
+    ? allProducts.filter(p => activeCategories.includes(p.category || 'otros'))
+    : allProducts;
+
+  const brands = [...new Set(filteredProducts.map(p => p.brand).filter(b => b))].sort();
+  
   container.innerHTML = '';
-  // Show top 12 brands or search? Let's show top brands
-  brands.slice(0, 15).forEach(brand => {
+  
+  if (brands.length === 0) {
+    container.innerHTML = '<p style="font-size:11px; color:var(--text-tertiary)">Selecciona una categoría para ver marcas</p>';
+    return;
+  }
+
+  // If a brand was previously selected but is no longer in the list, we might want to keep it or clear it.
+  // For now, let's just show the available ones.
+  brands.slice(0, 20).forEach(brand => {
     const btn = document.createElement('button');
-    btn.className = 'chip';
+    btn.className = 'chip' + (activeBrands.includes(brand) ? ' active' : '');
     btn.textContent = brand;
     btn.addEventListener('click', () => {
       btn.classList.toggle('active');
@@ -451,12 +468,15 @@ function setupClearFilters() {
 function setupBackToTop() {
   const btn = document.getElementById('back-to-top');
   if (!btn) return;
+  const chatContainer = document.getElementById('chatbot-container');
   
   window.addEventListener('scroll', () => {
     if (window.scrollY > 300) {
       btn.classList.add('visible');
+      if (chatContainer) chatContainer.classList.add('chat-with-backtop');
     } else {
       btn.classList.remove('visible');
+      if (chatContainer) chatContainer.classList.remove('chat-with-backtop');
     }
   });
 
@@ -645,3 +665,4 @@ function closeModal() {
   document.getElementById('compare-modal').style.display = 'none';
   document.getElementById('modal-overlay').style.display = 'none';
 }
+window.showProductDetails = showProductDetails;

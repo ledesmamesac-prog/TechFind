@@ -1,4 +1,5 @@
 // ── lobby script.js ──
+window.showProductDetails = null; // Pre-declare
 document.addEventListener('DOMContentLoaded', async () => {
   setupProductDetailModal();
   try {
@@ -93,6 +94,7 @@ function showProductDetails(product) {
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
+window.showProductDetails = showProductDetails;
 
 function renderSimilarProducts(current) {
   const grid = document.getElementById('pd-similar-grid');

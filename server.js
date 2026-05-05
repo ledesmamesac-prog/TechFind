@@ -44,6 +44,201 @@ const verifyFirebaseToken = async (req, res, next) => {
 };
 
 app.use(express.json());
+
+// --- AI / Phi-4 proxy endpoints ---
+const AZURE_ENDPOINT = process.env.AZURE_PHI4_ENDPOINT;
+const AZURE_DEPLOYMENT = process.env.AZURE_PHI4_DEPLOYMENT;
+const AZURE_API_KEY = process.env.AZURE_PHI4_API_KEY;
+
+async function callPhi(messages, maxTokens = 800, temperature = 0.2) {
+  if (!AZURE_ENDPOINT || !AZURE_DEPLOYMENT || !AZURE_API_KEY) throw new Error('Azure Phi-4 not configured');
+
+  const base = AZURE_ENDPOINT.replace(/\/$/, '');
+  const usesOpenAiV1 = /\/openai\/v1$/i.test(base) || /\/openai\/v1\//i.test(base);
+  const tryUrls = [];
+
+  if (usesOpenAiV1) {
+    // Azure AI Foundry / OpenAI v1 style endpoint
+    tryUrls.push({
+      url: `${base.replace(/\/$/, '')}/chat/completions`,
+      body: { model: AZURE_DEPLOYMENT, messages, max_tokens: maxTokens, temperature }
+    });
+  } else {
+    // Classic Azure OpenAI deployments path
+    tryUrls.push({
+      url: `${base}/openai/deployments/${AZURE_DEPLOYMENT}/chat/completions?api-version=2024-06-01-preview`,
+      body: { messages, max_tokens: maxTokens, temperature }
+    });
+
+    // Newer Azure AI style fallback: /openai/v1/chat/completions with model in body
+    tryUrls.push({
+      url: `${base}/openai/v1/chat/completions`,
+      body: { model: AZURE_DEPLOYMENT, messages, max_tokens: maxTokens, temperature }
+    });
+  }
+
+  let lastErr = null;
+  for (const attempt of tryUrls) {
+    try {
+      const resp = await fetch(attempt.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-key': AZURE_API_KEY },
+        body: JSON.stringify(attempt.body)
+      });
+      if (!resp.ok) {
+        const t = await resp.text();
+        console.error('Phi call URL:', attempt.url);
+        console.error('Phi response status:', resp.status, resp.statusText);
+        console.error('Phi response body:', t);
+        lastErr = new Error(`Phi-4 request failed ${resp.status}: ${t}`);
+        // try next
+        continue;
+      }
+      return resp.json();
+    } catch (err) {
+      console.error('Phi call attempt failed for', attempt.url, err.message || err);
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Phi-4 call failed (unknown)');
+}
+
+function extractJsonFromPhi(content) {
+  if (typeof content !== 'string') return content;
+  let text = content.trim();
+  text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '');
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return text.slice(firstBrace, lastBrace + 1);
+  }
+  return text;
+}
+
+// Endpoint: generate search JSON from user query
+app.post('/api/ai/phi/search-json', async (req, res) => {
+  const { query } = req.body || {};
+  if (!query || typeof query !== 'string') return res.status(400).json({ error: 'query required' });
+
+const system = `You are a product search extractor. Output ONLY valid JSON:
+{"raw_query":"string","intent":{"brand":null,"category":null,"keywords":[],"offers_only":false,"price_min":null,"price_max":null,"sort":"relevance"},"size":5,"meta":{"confidence":0.9,"source":"phi-4"}}
+
+Rules:
+- Currency: COP. Convert text prices to integers.
+- Always respond in Spanish. Keywords must be in Spanish.
+- category MUST be one of: audio, celulares, computadores, consolas, impresoras, otros, pantallas, tablets. If none fits, use null.
+- Correct typos in brand names (e.g. "samsng" -> "Samsung").
+- Vague intent queries (working, gaming without specific product) → set category but leave keywords: []
+- Set offers_only: true ONLY when user explicitly says "oferta", "descuento", "promocion", "rebaja". Words like "economico", "barato", "precio bajo" should NOT set offers_only: true, instead use sort: "price_asc".
+- "laptops","portatiles","notebook" -> category "computadores"
+- "smartphones","telefonos" -> category "celulares"
+- "audifonos","parlantes","auriculares" -> category "audio"
+- "televisor","tv","monitor" -> category "pantallas"
+- "smartwatch","reloj inteligente" -> category "otros"
+- No extra text.`;
+  const user = `User query: "${query.replace(/\"/g, '\\"')}"`;
+
+  try {
+    const reply = await callPhi([{ role: 'system', content: system }, { role: 'user', content: user }], 250, 0.2);
+    const content = reply.choices?.[0]?.message?.content || reply.choices?.[0]?.text;
+    let parsed;
+    try {
+      parsed = JSON.parse(extractJsonFromPhi(content));
+    } catch (e) {
+      return res.status(500).json({ error: 'AI returned invalid JSON', raw: content });
+    }
+    // sanitize
+    parsed.size = Math.max(1, Math.min(8, parseInt(parsed.size) || 5));
+    parsed.raw_query = parsed.raw_query || query;
+    parsed.meta = parsed.meta || {};
+    parsed.meta.confidence = typeof parsed.meta.confidence === 'number' ? parsed.meta.confidence : 0.5;
+    parsed.meta.source = 'phi-4';
+    parsed.intent = parsed.intent || {};
+    parsed.intent.brand = parsed.intent.brand ?? null;
+    parsed.intent.category = parsed.intent.category ?? null;
+    parsed.intent.keywords = Array.isArray(parsed.intent.keywords) ? parsed.intent.keywords : [];
+    parsed.intent.offers_only = Boolean(parsed.intent.offers_only);
+    parsed.intent.price_min = Number.isFinite(parsed.intent.price_min) ? parsed.intent.price_min : null;
+    parsed.intent.price_max = Number.isFinite(parsed.intent.price_max) ? parsed.intent.price_max : null;
+    parsed.intent.sort = parsed.intent.sort || 'relevance';
+    return res.json(parsed);
+  } catch (err) {
+    console.error('Phi search-json error:', err.message || err);
+    return res.status(500).json({ error: 'Phi-4 call failed', detail: String(err) });
+  }
+});
+
+// Endpoint: search products by intent filters (backend optimized, no AI)
+app.post('/api/products/search', async (req, res) => {
+  try {
+    const { intent, size } = req.body || {};
+    if (!intent || typeof intent !== 'object') return res.status(400).json({ error: 'intent object required' });
+
+    const limit = Math.max(1, Math.min(8, parseInt(size) || 5));
+    let results = await getCachedProducts();
+
+    if (intent.brand) {
+      const brand = String(intent.brand).toLowerCase();
+      results = results.filter(p => String((p.brand || '').toLowerCase()).includes(brand));
+    }
+
+    if (intent.category) {
+      const category = String(intent.category).toLowerCase();
+      results = results.filter(p => String((p.category || '').toLowerCase()).includes(category));
+    }
+
+    if (intent.price_min && Number.isFinite(intent.price_min)) {
+      results = results.filter(p => p.price >= intent.price_min);
+    }
+
+    if (intent.price_max && Number.isFinite(intent.price_max)) {
+      results = results.filter(p => p.price <= intent.price_max);
+    }
+
+    if (intent.offers_only === true) {
+      const withDiscount = results.filter(p =>
+        (p.discountPercentage || 0) > 0 ||
+        p.discount ||
+        (p.originalPrice && p.originalPrice > p.price)
+      );
+      // If there are discounted products use them, otherwise keep all results.
+      if (withDiscount.length > 0) results = withDiscount;
+      else results.sort((a, b) => a.price - b.price);
+    }
+
+    if (Array.isArray(intent.keywords) && intent.keywords.length > 0) {
+      const keywords = intent.keywords
+        .map(k => String(k).toLowerCase())
+        .filter(k => k.length > 3)
+        .filter(k => !['baratas', 'barato', 'economico', 'economica', 'buenos', 'bueno', 'potente', 'potentes'].includes(k));
+
+      if (keywords.length > 0) {
+        const filtered = results.filter(p => {
+          const haystack = String([p.name, p.brand, p.category].filter(Boolean).join(' ')).toLowerCase();
+          return keywords.some(k => haystack.includes(k));
+        });
+        // Apply keyword filter only if it still returns products.
+        if (filtered.length > 0) results = filtered;
+      }
+    }
+
+    const sort = String(intent.sort || 'relevance').toLowerCase();
+    if (sort === 'price_asc') results.sort((a, b) => a.price - b.price);
+    else if (sort === 'price_desc') results.sort((a, b) => b.price - a.price);
+    else if (sort === 'discount_desc') results.sort((a, b) => (b.discountPercentage || 0) - (a.discountPercentage || 0));
+    else if (sort === 'rating_desc') results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+    return res.json({
+      products: results.slice(0, limit),
+      total: results.length,
+      size: limit
+    });
+  } catch (err) {
+    console.error('Search error:', err.message || err);
+    return res.status(500).json({ error: 'Search failed', detail: String(err) });
+  }
+});
+
 app.use(express.static('public'));
 
 let globalProductCache = [];

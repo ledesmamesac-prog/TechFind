@@ -6,6 +6,8 @@ import {
   signInWithEmailAndPassword, 
   signInWithPopup,
   onAuthStateChanged,
+  setPersistence,
+  browserSessionPersistence,
   doc, 
   setDoc 
 } from "./firebase-config.js";
@@ -49,6 +51,7 @@ if (loginForm) {
     const password = document.getElementById("password").value;
 
     try {
+      await setPersistence(auth, browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       alert("Inicio de sesión exitoso");
       window.location.href = "index.html"; // Redirect to home
@@ -64,6 +67,7 @@ const googleBtn = document.getElementById("google-login");
 if (googleBtn) {
   googleBtn.addEventListener("click", async () => {
     try {
+      await setPersistence(auth, browserSessionPersistence);
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
