@@ -465,11 +465,27 @@ app.get('/api/summary', async (req, res) => {
       featured.push(...items);
     });
 
-    // Stores list
-    const stores = Array.from(new Set(all.map(p => p.store)));
+    // Stores list with counts and share of total products
+    const storeMap = {};
+    all.forEach(p => {
+      const key = p.store || 'Otro';
+      if (!storeMap[key]) storeMap[key] = 0;
+      storeMap[key] += 1;
+    });
+
+    const totalProducts = all.length || 1;
+    const stores = Object.entries(storeMap)
+      .map(([name, count]) => ({
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        count,
+        percent: Math.round((count / totalProducts) * 1000) / 10
+      }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
     const storeCount = stores.length;
 
-    res.json({ categories, featured: featured.slice(0, 12), storeCount, stores });
+    res.json({ categories, featured: featured.slice(0, 12), storeCount, stores, totalProducts });
   } catch (err) {
     console.error('Error building summary:', err);
     res.status(500).json({ error: 'Failed to build summary' });

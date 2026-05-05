@@ -26,13 +26,6 @@
       <a href="index.html" class="nav-link active">Inicio</a>
       <a href="category.html" class="nav-link">Todos los productos</a>
     </nav>
-    <div class="topbar-stores">
-      <a href="category.html?store=Alkosto" class="store-badge alkosto-badge">ALKOSTO</a>
-      <a href="category.html?store=Compulago" class="store-badge compulago-badge">COMPULAGO</a>
-      <a href="category.html?store=Computerworking" class="store-badge computerworking-badge">COMPUTERWORKING</a>
-      <a href="category.html?store=Exito" class="store-badge exito-badge">EXITO</a>
-      <a href="category.html?store=Falabella" class="store-badge falabella-badge">FALABELLA</a>
-    </div>
 
       <!-- Profile Icon -->
   <a href="login.html" class="profile-icon">
@@ -80,6 +73,22 @@
     </div>
   </section>
 
+  <!-- Tiendas Destacadas -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Tiendas destacadas</h2>
+      <a href="category.html" class="section-link">Ver todas →</a>
+    </div>
+    <p style="margin: -4px 0 14px; color: var(--text-tertiary); font-size: 13px;">Cada tarjeta muestra cuántos productos aporta esa tienda al total de TechFind.</p>
+    <div class="store-cards-grid" id="store-cards-grid">
+      <div class="skeleton-card store"></div>
+      <div class="skeleton-card store"></div>
+      <div class="skeleton-card store"></div>
+      <div class="skeleton-card store"></div>
+      <div class="skeleton-card store"></div>
+    </div>
+  </section>
+  
   <!-- FEATURED PRODUCTS -->
   <section class="section">
     <div class="section-header">
@@ -211,7 +220,6 @@
     </div>
   </div>
 
-  <script src="icons.js"></script>
   <script type="module" src="script.js"></script>
   <!-- CHATBOT -->
   <div id="chatbot-container" class="chatbot-container">

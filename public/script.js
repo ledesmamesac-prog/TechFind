@@ -3,8 +3,13 @@ window.showProductDetails = null; // Pre-declare
 document.addEventListener('DOMContentLoaded', async () => {
   setupProductDetailModal();
   try {
-    const res = await fetch('/api/summary');
-    const { categories, featured, storeCount, stores } = await res.json();
+    const [summaryRes, productsRes] = await Promise.all([
+      fetch('/api/summary'),
+      fetch('/api/products')
+    ]);
+
+    const { categories, featured, storeCount, stores, totalProducts } = await summaryRes.json();
+    allProducts = await productsRes.json();
 
     // Hero stats
     const total = categories.reduce((s, c) => s + c.count, 0);
@@ -13,13 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stat-stores').textContent = storeCount || 0;
 
     renderCategoryCards(categories);
+    renderStoreCards(stores, totalProducts || total);
     renderFeatured(featured);
     setupLocationTabs();
-
-    // Background fetch all products for the similar products logic
-    fetch('/api/products').then(r => r.json()).then(data => {
-      allProducts = data;
-    });
 
   } catch (err) {
     console.error('Error loading summary:', err);
@@ -35,13 +36,57 @@ initProfile();
 
 let allProducts = []; // To store featured or similar for modal
 
+const STORE_CARD_IMAGES = {
+  alkosto: '/assets/Alkosto.webp',
+  compulago: '/assets/Compulago',
+  computerworking: '/assets/Compuworking.png',
+  exito: '/assets/Exito.svg',
+  falabella: '/assets/Falabella.png',
+  tauretcomputadores: '/assets/TauretComputadores.png'
+};
+
+function normalizeStoreKey(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function getStoreCardImageUrl(storeName) {
+  return STORE_CARD_IMAGES[normalizeStoreKey(storeName)] || '';
+}
+
+function getHighResImageUrl(imageUrl, targetWidth = 900) {
+  if (!imageUrl || typeof imageUrl !== 'string') return imageUrl;
+
+  try {
+    const url = new URL(imageUrl, window.location.origin);
+    let changed = false;
+
+    ['w', 'width', 'imwidth', 'sz'].forEach(param => {
+      if (url.searchParams.has(param)) {
+        url.searchParams.set(param, String(targetWidth));
+        changed = true;
+      }
+    });
+
+    if (changed) return url.toString();
+  } catch (_) {
+    // If the URL is not parseable, keep the original one.
+  }
+
+  return imageUrl;
+}
+
 // ── PRODUCT DETAIL MODAL ──
 function showProductDetails(product) {
   const overlay = document.getElementById('product-detail-modal-overlay');
   const modal = document.getElementById('product-detail-modal');
+  const modalImageUrl = getHighResImageUrl(product.image, 900);
   
   document.getElementById('pd-img-box').innerHTML = product.image 
-    ? `<img src="${product.image}" alt="${product.name}">` 
+    ? `<img src="${modalImageUrl}" alt="${product.name}" loading="eager" decoding="async" fetchpriority="high">` 
     : catIcon(product.category, 100);
   
   const storeBadge = document.getElementById('pd-store');
@@ -206,6 +251,72 @@ function renderFeatured(products) {
   grid.innerHTML = '';
   products.forEach((p, i) => {
     grid.appendChild(makeFeaturedCard(p, i));
+  });
+}
+
+function renderStoreCards(stores, totalProducts = 0) {
+  const grid = document.getElementById('store-cards-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const safeTotal = Number(totalProducts) || 1;
+  const storeCounts = (Array.isArray(allProducts) ? allProducts : []).reduce((acc, product) => {
+    const key = String(product?.store || 'Otro');
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  (Array.isArray(stores) ? stores : []).forEach((store, i) => {
+    const storeName = String(
+      typeof store === 'string'
+        ? store
+        : (store?.name || store?.store || store?.slug || 'Otro')
+    );
+    const rawCount = Number(
+      typeof store === 'object'
+        ? (store?.count ?? store?.total ?? storeCounts[storeName] ?? storeCounts[storeName.trim()] ?? 0)
+        : (storeCounts[storeName] ?? storeCounts[storeName.trim()] ?? 0)
+    );
+    const count = Number.isFinite(rawCount) ? rawCount : 0;
+    const card = document.createElement('a');
+    card.href = `category.html?store=${encodeURIComponent(storeName)}`;
+    card.style.animationDelay = `${i * 0.05}s`;
+
+    const imageUrl = getStoreCardImageUrl(storeName);
+    const storeKey = normalizeStoreKey(storeName);
+    const percent = Number.isFinite(Number(store?.percent))
+      ? Number(store.percent)
+      : Math.round((count / safeTotal) * 1000) / 10;
+    const initial = storeName.charAt(0).toUpperCase();
+    const cardClass = [
+      'store-card',
+      `store-card--${storeKey}`
+    ].filter(Boolean).join(' ');
+
+    card.className = cardClass;
+    card.innerHTML = `
+      <div class="store-card-image store-card-image--${storeKey}">
+        ${imageUrl
+          ? `<img src="${imageUrl}" alt="${storeName}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : ''}
+        <div class="store-card-fallback" style="${imageUrl ? 'display:none' : ''}">${initial}</div>
+      </div>
+      <div class="store-card-body">
+        <div class="store-card-top">
+          <h3 class="store-card-name">${storeName}</h3>
+          <span class="store-card-count">${count.toLocaleString()} productos</span>
+        </div>
+        <div class="store-card-meter" aria-hidden="true">
+          <div class="store-card-meter-fill" style="width:${Math.max(4, Math.min(100, percent))}%"></div>
+        </div>
+        <div class="store-card-footer">
+          <span class="store-card-share">${percent.toFixed(1)}% del total</span>
+          <span class="store-card-cta">Ver tienda →</span>
+        </div>
+      </div>
+    `;
+
+    grid.appendChild(card);
   });
 }
 

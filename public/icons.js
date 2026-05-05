@@ -83,12 +83,13 @@ export function renderStarsHtml(rating) {
 }
 
 export function getStoreBadgeClass(store) {
-  const lower = (store || '').toLowerCase();
+  const lower = (store || '').toLowerCase().replace(/\s+/g, '');
   let base = 'store-badge';
   if (lower.includes('exito') || lower.includes('éxito')) return base + ' exito-badge';
   if (lower.includes('alkosto')) return base + ' alkosto-badge';
   if (lower.includes('compulago')) return base + ' compulago-badge';
   if (lower.includes('computerworking')) return base + ' computerworking-badge';
   if (lower.includes('falabella')) return base + ' falabella-badge';
+  if (lower.includes('tauret')) return base + ' tauretcomputadores-badge';
   return base + ' default-badge';
 }
