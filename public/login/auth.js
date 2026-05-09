@@ -4,13 +4,14 @@ import {
   googleProvider,
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
   signInWithPopup,
   onAuthStateChanged,
   setPersistence,
   browserSessionPersistence,
   doc, 
   setDoc 
-} from "./firebase-config.js";
+} from "../firebase-config.js";
 
 // Register Form Logic
 const registerForm = document.getElementById("register-form");
@@ -54,10 +55,35 @@ if (loginForm) {
       await setPersistence(auth, browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       alert("Inicio de sesión exitoso");
-      window.location.href = "index.html"; // Redirect to home
+      window.location.href = "../dashboard/index.html"; // Redirect to home
     } catch (error) {
       console.error("Error en login:", error);
       alert(`Error: ${error.message}`);
+    }
+  });
+}
+
+// Forgot password flow (uses Firebase Auth email template configured in console)
+const forgotPasswordLink = document.getElementById("forgot-password-link");
+if (forgotPasswordLink) {
+  forgotPasswordLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const emailInput = document.getElementById("email");
+    const email = (emailInput?.value || "").trim();
+
+    if (!email) {
+      alert("Escribe tu correo en el campo Email Address para enviarte el link de recuperación.");
+      emailInput?.focus();
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Te enviamos un correo para restablecer tu contraseña.");
+    } catch (error) {
+      console.error("Error al enviar recuperación:", error);
+      alert(`No se pudo enviar el correo de recuperación: ${error.message}`);
     }
   });
 }
@@ -79,7 +105,7 @@ if (googleBtn) {
       }, { merge: true });
 
       alert(`Bienvenido ${user.displayName}`);
-      window.location.href = "index.html";
+      window.location.href = "../dashboard/index.html";
     } catch (error) {
       console.error("Error en Google login:", error);
       alert(`Error: ${error.message}`);

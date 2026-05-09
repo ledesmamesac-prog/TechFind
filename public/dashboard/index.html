@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/assets/dibujo.svg">
   <title>TechFind — Compara precios de tecnología en Colombia</title>
   <meta name="description"
     content="Encuentra y compara precios de computadores, celulares, tablets y más en Éxito y Alkosto.">
@@ -19,18 +20,23 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-logo">
-      <span class="logo-mark">T</span>
+      <img src="/assets/dibujo.svg" alt="TechFind Logo" class="logo-img">
       <span class="logo-text">TechFind</span>
     </div>
     <nav class="topbar-nav">
       <a href="index.html" class="nav-link active">Inicio</a>
-      <a href="category.html" class="nav-link">Todos los productos</a>
+      <a href="../categories/category.html" class="nav-link">Todos los productos</a>
+      <a href="../favorites/favorites.html" class="nav-link">Favoritos</a>
     </nav>
 
-      <!-- Profile Icon -->
-  <a href="login.html" class="profile-icon">
-    <img src="https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png" alt="Perfil">
-  </a>
+    <!-- Profile Icon -->
+    <a href="../login/login.html" class="profile-icon">
+      <img src="https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png" alt="Perfil">
+    </a>
+    <div class="boton-favoritos">
+      <a href="../favorites/favorites.html" class="favoritos-link" id="favorites-link" aria-label="Favoritos">
+      </a>
+    </div>
   </header>
 
 
@@ -79,7 +85,8 @@
       <h2 class="section-title">Tiendas destacadas</h2>
       <a href="category.html" class="section-link">Ver todas →</a>
     </div>
-    <p style="margin: -4px 0 14px; color: var(--text-tertiary); font-size: 13px;">Cada tarjeta muestra cuántos productos aporta esa tienda al total de TechFind.</p>
+    <p style="margin: -4px 0 14px; color: var(--text-tertiary); font-size: 13px;">Cada tarjeta muestra cuántos productos
+      aporta esa tienda al total de TechFind.</p>
     <div class="store-cards-grid" id="store-cards-grid">
       <div class="skeleton-card store"></div>
       <div class="skeleton-card store"></div>
@@ -88,12 +95,12 @@
       <div class="skeleton-card store"></div>
     </div>
   </section>
-  
+
   <!-- FEATURED PRODUCTS -->
   <section class="section">
     <div class="section-header">
       <h2 class="section-title">Productos destacados</h2>
-      <a href="category.html" class="section-link">Ver todos →</a>
+      <a href="../categories/category.html" class="section-link">Ver todos →</a>
     </div>
     <div class="featured-grid" id="featured-grid">
       <div class="skeleton-card tall"></div>
@@ -103,15 +110,17 @@
     </div>
   </section>
 
+
   <!-- LOCATIONS SECTION -->
   <section class="section locations-section">
     <div class="section-header">
       <div style="flex:1">
         <h2 class="section-title">Tiendas Físicas en Cartagena</h2>
-        <p style="font-size: 13px; color: var(--text-tertiary); margin-top: 4px;">Encuentra nuestras tiendas aliadas cerca de ti</p>
+        <p style="font-size: 13px; color: var(--text-tertiary); margin-top: 4px;">Encuentra nuestras tiendas aliadas
+          cerca de ti</p>
       </div>
     </div>
-    
+
     <div class="locations-container">
       <div class="locations-tabs" id="location-tabs">
         <button class="loc-tab active" data-store="Alkosto">Alkosto</button>
@@ -120,7 +129,7 @@
         <button class="loc-tab" data-store="Exito">Éxito</button>
         <button class="loc-tab" data-store="Falabella">Falabella</button>
       </div>
-      
+
       <div class="location-display">
         <div class="location-info">
           <div class="loc-info-header">
@@ -131,7 +140,8 @@
             <!-- Addresses will be injected here -->
           </ul>
           <a href="#" id="loc-gmaps-link" target="_blank" class="loc-btn-maps">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
@@ -139,15 +149,32 @@
           </a>
         </div>
         <div class="location-map">
-          <iframe 
-            id="loc-map-iframe"
-            src="" 
-            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+          <iframe id="loc-map-iframe" src="" width="100%" height="100%" style="border:0;" allowfullscreen=""
+            loading="lazy">
           </iframe>
         </div>
       </div>
     </div>
   </section>
+
+
+  <div class="favorites-backdrop"></div>
+
+  <aside class="favorite-bar" aria-label="Favoritos">
+    <div class="favorites-panel">
+      <div class="favorites-panel-header">
+        <div>
+          <div class="favorites-panel-kicker">Guardados</div>
+          <h3 class="favorites-panel-title">Mis Favoritos</h3>
+        </div>
+        <span id="favorites-count" class="favorites-count">0</span>
+      </div>
+
+      <div id="favorite-bar-list" class="modal-favorites-list favorites-panel-list"></div>
+
+      <a href="../favorites/favorites.html" class="favorites-panel-btn">Ver favoritos -→</a>
+    </div>
+  </aside>
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -204,7 +231,11 @@
       <div class="profile-modal-body">
         <div class="modal-favorites-section">
           <h3 class="modal-favorites-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ff4d4d"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" style="color:#ff4d4d">
+              <path
+                d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+            </svg>
             Mis Favoritos
           </h3>
           <div id="modal-favorites-list" class="modal-favorites-list">
@@ -213,14 +244,53 @@
         </div>
 
         <button id="logout-btn" class="btn-logout" style="margin-top: 24px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
           Cerrar sesión
         </button>
       </div>
     </div>
   </div>
 
+  <script src="icons.js"></script>
   <script type="module" src="script.js"></script>
+  <script type="module">
+    import { initProfile } from '../profile.js';
+    import { CAT_ICONS } from './icons.js';
+
+    initProfile();
+
+    const favoritesLink = document.getElementById('favorites-link');
+    if (favoritesLink) {
+      favoritesLink.innerHTML = CAT_ICONS.heart;
+      favoritesLink.title = 'Favoritos';
+      favoritesLink.setAttribute('aria-expanded', 'false');
+      favoritesLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        document.body.classList.toggle('favorites-open');
+        favoritesLink.setAttribute('aria-expanded', String(document.body.classList.contains('favorites-open')));
+      });
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        document.body.classList.remove('favorites-open');
+        if (favoritesLink) favoritesLink.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    const favoritesBackdrop = document.querySelector('.favorites-backdrop');
+    if (favoritesBackdrop) {
+      favoritesBackdrop.addEventListener('click', () => {
+        document.body.classList.remove('favorites-open');
+        if (favoritesLink) favoritesLink.setAttribute('aria-expanded', 'false');
+      });
+    }
+  </script>
   <!-- CHATBOT -->
   <div id="chatbot-container" class="chatbot-container">
     <div id="chatbot-window" class="chatbot-window" style="display:none">
@@ -242,12 +312,19 @@
       <div class="chat-input-area">
         <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
         <button id="send-chat" class="chat-send">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 6 22 2"></polygon></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 6 22 2"></polygon>
+          </svg>
         </button>
       </div>
     </div>
     <button id="chat-toggle" class="chat-toggle-btn" title="Ayuda AI">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
     </button>
   </div>
   <script type="module" src="chatbot.js"></script>

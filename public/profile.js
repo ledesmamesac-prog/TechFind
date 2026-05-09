@@ -1,7 +1,14 @@
 import { auth, db, onAuthStateChanged, signOut, doc, setDoc, getDoc } from "./firebase-config.js";
-import { catIcon } from "./icons.js";
+import { catIcon } from "./dashboard/icons.js";
 
 let userFavorites = [];
+let favoritesContainerRef = null;
+let favoritesCountRef = null;
+
+function refreshFavoritesUI() {
+  renderFavoritesInModal(favoritesContainerRef);
+  if (favoritesCountRef) favoritesCountRef.textContent = String(userFavorites.length);
+}
 
 export function initProfile() {
   const profileIcon = document.querySelector('.profile-icon');
@@ -11,34 +18,36 @@ export function initProfile() {
   const modalOverlay = document.getElementById('profile-modal-overlay');
   const closeModal = document.getElementById('close-profile-modal');
   const logoutBtn = document.getElementById('logout-btn');
-  
+  favoritesContainerRef = document.getElementById('favorite-bar-list') || document.getElementById('modal-favorites-list');
+  favoritesCountRef = document.getElementById('favorites-count');
+
   const modalImg = document.getElementById('modal-user-img');
   const modalName = document.getElementById('modal-user-name');
   const modalEmail = document.getElementById('modal-user-email');
-  const favoritesList = document.getElementById('modal-favorites-list');
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const photo = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=random&color=fff`;
-      
+
       if (profileImg) profileImg.src = photo;
       if (modalImg) modalImg.src = photo;
       if (modalName) modalName.textContent = user.displayName || 'Usuario';
       if (modalEmail) modalEmail.textContent = user.email;
-      
+
       // Load favorites from Firestore
       userFavorites = await loadFavorites(user.uid);
-      renderFavoritesInModal(favoritesList);
+      refreshFavoritesUI();
 
       profileIcon.onclick = (e) => {
         e.preventDefault();
-        renderFavoritesInModal(favoritesList);
+        refreshFavoritesUI();
         modalOverlay.classList.add('active');
       };
     } else {
       userFavorites = [];
       if (profileImg) profileImg.src = 'https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png';
-      profileIcon.onclick = null; 
+      refreshFavoritesUI();
+      profileIcon.onclick = null;
     }
   });
 
@@ -97,14 +106,18 @@ export async function toggleFavorite(product) {
       _id: product._id,
       name: product.name,
       price: product.price,
+      originalPrice: product.originalPrice,
+      discount: product.discount,
+      rating: product.rating,
       image: product.image,
       store: product.store,
       url: product.url,
       category: product.category
     });
   }
-  
+
   await saveFavorites(user.uid);
+  refreshFavoritesUI();
   return true;
 }
 
@@ -115,7 +128,26 @@ export function isFavorite(productId) {
 function renderFavoritesInModal(container) {
   if (!container) return;
   if (userFavorites.length === 0) {
-    container.innerHTML = '<p class="empty-favs">No tienes productos favoritos aún.</p>';
+    container.innerHTML = `
+      <div class="favorites-empty">
+        <div class="favorites-empty-illustration" aria-hidden="true">
+          <div class="favorites-empty-card">
+            
+          </div>
+        </div>
+        <div class="favorites-empty-title">No tienes favoritos aún</div>
+        <p class="favorites-empty-text">Guarda los productos que más te interesen para encontrarlos rápido y recibir notificaciones sobre cambios de precio.</p>
+        <a href="category.html" class="favorites-empty-btn">Empezar a buscar</a>
+        <div class="favorites-empty-ghost" aria-hidden="true">
+          <svg width="168" height="108" viewBox="0 0 168 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="26" y="18" width="116" height="72" rx="8" fill="#D1D5DB" opacity="0.45"/>
+            <rect x="58" y="32" width="52" height="18" rx="4" fill="#FFFFFF" opacity="0.4"/>
+            <rect x="44" y="56" width="80" height="6" rx="3" fill="#FFFFFF" opacity="0.35"/>
+            <rect x="48" y="66" width="72" height="6" rx="3" fill="#FFFFFF" opacity="0.25"/>
+          </svg>
+        </div>
+      </div>
+    `;
     return;
   }
 

@@ -1,9 +1,37 @@
-import { initProfile, toggleFavorite, isFavorite } from "./profile.js";
+import { initProfile, toggleFavorite, isFavorite } from "../profile.js";
 window.showProductDetails = null;
-import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
+import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "../dashboard/icons.js";
+import { makeProductCard, formatCardPriceHtml } from "../shared/product-card.js";
 
 // Initialize Profile Modal & Auth State
 initProfile();
+
+const favoritesLink = document.getElementById('favorites-link');
+if (favoritesLink) {
+  favoritesLink.innerHTML = CAT_ICONS.heart;
+  favoritesLink.title = 'Favoritos';
+  favoritesLink.setAttribute('aria-expanded', 'false');
+  favoritesLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    document.body.classList.toggle('favorites-open');
+    favoritesLink.setAttribute('aria-expanded', String(document.body.classList.contains('favorites-open')));
+  });
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    document.body.classList.remove('favorites-open');
+    if (favoritesLink) favoritesLink.setAttribute('aria-expanded', 'false');
+  }
+});
+
+const favoritesBackdrop = document.querySelector('.favorites-backdrop');
+if (favoritesBackdrop) {
+  favoritesBackdrop.addEventListener('click', () => {
+    document.body.classList.remove('favorites-open');
+    if (favoritesLink) favoritesLink.setAttribute('aria-expanded', 'false');
+  });
+}
 
 let allProducts = [];
 let compareList = [];
@@ -64,7 +92,7 @@ async function loadProducts() {
 }
 
 // ── CATEGORY FILTER CHIPS ──
-const CAT_ORDER = ['computadores','celulares','tablets','pantallas','audio','consolas','impresoras','otros'];
+const CAT_ORDER = ['computadores', 'celulares', 'tablets', 'pantallas', 'audio', 'consolas', 'impresoras', 'otros'];
 
 function buildCategoryFilters() {
   const cats = [...new Set(allProducts.map(p => p.category || 'otros'))]
@@ -122,15 +150,15 @@ function updateCatTitleBar() {
 function buildSubcategoryFilters() {
   const container = document.getElementById('filter-subcategory');
   const group = document.getElementById('filter-group-subcategory');
-  
+
   if (activeCategories.length === 0) {
     group.style.display = 'none';
     return;
   }
-  
+
   const validProducts = allProducts.filter(p => activeCategories.includes(p.category || 'otros'));
   const subcats = [...new Set(validProducts.map(p => p.subcategory || 'General'))].sort();
-  
+
   if (subcats.length <= 1) {
     group.style.display = 'none';
     return;
@@ -151,23 +179,23 @@ function buildSubcategoryFilters() {
     });
     container.appendChild(btn);
   });
-  
+
   group.style.display = 'block';
 }
 
 // ── BRAND FILTER CHIPS ──
 function buildBrandFilters() {
   const container = document.getElementById('filter-brand');
-  
+
   // Filter products by active categories first
-  const filteredProducts = activeCategories.length > 0 
+  const filteredProducts = activeCategories.length > 0
     ? allProducts.filter(p => activeCategories.includes(p.category || 'otros'))
     : allProducts;
 
   const brands = [...new Set(filteredProducts.map(p => p.brand).filter(b => b))].sort();
-  
+
   container.innerHTML = '';
-  
+
   if (brands.length === 0) {
     container.innerHTML = '<p style="font-size:11px; color:var(--text-tertiary)">Selecciona una categoría para ver marcas</p>';
     return;
@@ -227,9 +255,9 @@ function applyFilters() {
     return matchSearch && matchPrice && matchStore && matchCat && matchSubcat && matchBrand && matchDiscount;
   });
 
-  if (sort === 'price-asc')  filtered.sort((a, b) => a.price - b.price);
+  if (sort === 'price-asc') filtered.sort((a, b) => a.price - b.price);
   else if (sort === 'price-desc') filtered.sort((a, b) => b.price - a.price);
-  else if (sort === 'name-asc')   filtered.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sort === 'name-asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
   else if (sort === 'discount-desc') {
     filtered.sort((a, b) => {
       const discA = a.originalPrice ? (a.originalPrice - a.price) / a.originalPrice : 0;
@@ -317,7 +345,7 @@ function renderProducts(products) {
       chunk.forEach(product => {
         catGrid.appendChild(makeCard(product, ((displayedCount++) * 0.02).toFixed(2)));
       });
-      
+
       if (displayedCount < items.length) {
         if (!loadMoreBtn) {
           loadMoreBtn = document.createElement('button');
@@ -341,86 +369,33 @@ function renderProducts(products) {
   });
 }
 
-function formatPriceHtml(p) {
-  const hasDiscount = p.originalPrice && p.originalPrice > p.price;
-  if (!hasDiscount) {
-    return `<div class="card-price">$${Number(p.price).toLocaleString()}</div>`;
-  }
-  return `
-    <div class="card-price-wrap">
-      <div class="card-price-old">$${Number(p.originalPrice).toLocaleString()}</div>
-      <div class="card-price-new">$${Number(p.price).toLocaleString()}</div>
-    </div>
-  `;
-}
+// formatPriceHtml is re-exported from the shared module for use in this file
+const formatPriceHtml = formatCardPriceHtml;
 
 function makeCard(product, delay = 0) {
-  const card = document.createElement('div');
-  card.className = 'product-card';
-  card.style.animationDelay = `${delay}s`;
-
-  const inCompare = compareList.find(p => p._id === product._id);
-  const favorited = isFavorite(product._id);
-
-  const imgContent = product.image
-    ? `<img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-    : '';
-  const svgFallback = `<span class="card-img-fallback" style="${product.image ? 'display:none' : ''}">${catIcon(product.category, 40)}</span>`;
-
-  const discountTag = (product.discount || (product.originalPrice && product.originalPrice > product.price)) 
-    ? `<span class="card-discount-badge">${product.discount || 'OFERTA'}</span>` 
-    : '';
-
-  card.innerHTML = `
-    <div class="card-img-box">
-      ${imgContent}${svgFallback}
-      <span class="card-store ${getStoreBadgeClass(product.store)}">${product.store}</span>
-      ${discountTag}
-      <button class="card-fav-btn ${favorited ? 'active' : ''}" title="Añadir a favoritos">
-        ${favorited ? CAT_ICONS.heartFilled : CAT_ICONS.heart}
-      </button>
-    </div>
-    <div class="card-name">${product.name}</div>
-    ${renderStarsHtml(product.rating)}
-    ${formatPriceHtml(product)}
-    <div class="card-actions">
-      <a class="btn-view" href="${product.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Ver producto</a>
-      <button class="btn-compare ${inCompare ? 'active' : ''}" data-id="${product._id}">
-        ${inCompare ? '✓ Comparar' : '+ Comparar'}
-      </button>
-    </div>
-  `;
-  
-  card.onclick = () => showProductDetails(product);
-
-  card.querySelector('.btn-compare').addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleCompare(product);
+  return makeProductCard(product, {
+    delay,
+    inCompare:   !!compareList.find(p => p._id === product._id),
+    favorited:   isFavorite(product._id),
+    onCardClick: (p) => showProductDetails(p),
+    onCompare:   (p) => toggleCompare(p),
+    onFavorite:  async (p) => {
+      const success = await toggleFavorite(p);
+      if (success) applyFilters(); // Re-render to update heart state
+    },
   });
-  
-  const favBtn = card.querySelector('.card-fav-btn');
-  favBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const success = await toggleFavorite(product);
-    if (success) {
-      applyFilters(); // Re-render to update heart state
-    }
-  });
-
-  return card;
 }
 
 // ── SETUP LISTENERS ──
 function setupSearch() { document.getElementById('search-input').addEventListener('input', applyFilters); }
-function setupSort()   { document.getElementById('sort-select').addEventListener('change', applyFilters); }
+function setupSort() { document.getElementById('sort-select').addEventListener('change', applyFilters); }
 function setupPriceRange() {
   const range = document.getElementById('price-range');
-  const val   = document.getElementById('price-val');
-  range.addEventListener('input', () => { 
-    val.textContent = '$' + parseInt(range.value).toLocaleString(); 
+  const val = document.getElementById('price-val');
+  range.addEventListener('input', () => {
+    val.textContent = '$' + parseInt(range.value).toLocaleString();
     document.querySelectorAll('.price-chip').forEach(c => c.classList.remove('active'));
-    applyFilters(); 
+    applyFilters();
   });
 }
 
@@ -431,11 +406,11 @@ function setupQuickPrices() {
       btn.classList.add('active');
       const max = btn.dataset.max ? parseInt(btn.dataset.max) : maxPrice;
       const min = btn.dataset.min ? parseInt(btn.dataset.min) : 0;
-      
+
       const range = document.getElementById('price-range');
       range.value = max;
       document.getElementById('price-val').textContent = '$' + max.toLocaleString();
-      
+
       // We could filter specifically by min too, but the slider only has max. 
       // For simplicity, we'll set the slider and apply filters.
       applyFilters();
@@ -469,7 +444,7 @@ function setupBackToTop() {
   const btn = document.getElementById('back-to-top');
   if (!btn) return;
   const chatContainer = document.getElementById('chatbot-container');
-  
+
   window.addEventListener('scroll', () => {
     if (window.scrollY > 300) {
       btn.classList.add('visible');
@@ -489,23 +464,23 @@ function setupBackToTop() {
 function showProductDetails(product) {
   const overlay = document.getElementById('product-detail-modal-overlay');
   const modal = document.getElementById('product-detail-modal');
-  
+
   // Fill content
-  document.getElementById('pd-img-box').innerHTML = product.image 
-    ? `<img src="${product.image}" alt="${product.name}">` 
+  document.getElementById('pd-img-box').innerHTML = product.image
+    ? `<img src="${product.image}" alt="${product.name}">`
     : catIcon(product.category, 100);
-  
+
   const storeBadge = document.getElementById('pd-store');
   storeBadge.className = 'pd-store-badge ' + getStoreBadgeClass(product.store);
   storeBadge.textContent = product.store;
-  
+
   document.getElementById('pd-title').textContent = product.name;
   document.getElementById('pd-rating').innerHTML = renderStarsHtml(product.rating);
-  
+
   const oldPriceEl = document.getElementById('pd-price-old');
   const newPriceEl = document.getElementById('pd-price-new');
   const discPctEl = document.getElementById('pd-discount-pct');
-  
+
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   if (hasDiscount) {
     oldPriceEl.style.display = 'block';
@@ -517,22 +492,22 @@ function showProductDetails(product) {
     oldPriceEl.style.display = 'none';
     discPctEl.style.display = 'none';
   }
-  
+
   newPriceEl.textContent = `$${Number(product.price).toLocaleString()}`;
-  
+
   const buyBtn = document.getElementById('pd-buy-btn');
   buyBtn.href = product.url;
-  
+
   const favBtn = document.getElementById('pd-fav-btn');
   const favIcon = document.getElementById('pd-fav-icon');
-  
+
   function updateFavBtn() {
     const active = isFavorite(product._id);
     favBtn.classList.toggle('active', active);
     favIcon.innerHTML = active ? CAT_ICONS.heartFilled : CAT_ICONS.heart;
   }
   updateFavBtn();
-  
+
   favBtn.onclick = async (e) => {
     e.stopPropagation();
     const success = await toggleFavorite(product);
@@ -554,12 +529,12 @@ function showProductDetails(product) {
 function renderSimilarProducts(current) {
   const grid = document.getElementById('pd-similar-grid');
   grid.innerHTML = '';
-  
+
   const similar = allProducts
     .filter(p => p._id !== current._id && p.category === current.category)
     .sort((a, b) => Math.abs(a.price - current.price) - Math.abs(b.price - current.price))
     .slice(0, 12);
-    
+
   similar.forEach(p => {
     const card = makeCard(p);
     card.classList.add('similar-card');
@@ -571,13 +546,13 @@ function setupProductDetailModal() {
   const overlay = document.getElementById('product-detail-modal-overlay');
   const modal = document.getElementById('product-detail-modal');
   const close = document.getElementById('close-pd-modal');
-  
+
   const closeModal = () => {
     overlay.style.display = 'none';
     modal.style.display = 'none';
     document.body.style.overflow = '';
   };
-  
+
   if (close) close.onclick = closeModal;
   if (overlay) overlay.onclick = closeModal;
 }
@@ -605,6 +580,7 @@ function updateCompareBar() {
 
 function setupCompareBar() {
   document.getElementById('compare-action').addEventListener('click', showCompareModal);
+
   document.getElementById('compare-clear').addEventListener('click', () => { compareList = []; updateCompareBar(); applyFilters(); });
 }
 
@@ -613,19 +589,19 @@ function showCompareModal() {
   if (compareList.length < 2) { alert('Selecciona al menos 2 productos.'); return; }
   const wrap = document.getElementById('compare-table-wrap');
   const minPrice = Math.min(...compareList.map(p => p.price));
-  
+
   let html = '<table class="compare-table"><thead><tr><th class="sticky-col">Atributo</th>';
-  compareList.forEach(p => { 
+  compareList.forEach(p => {
     html += `<th>
       <div class="modal-prod-header">
         ${p.price === minPrice ? '<span class="best-badge">MEJOR PRECIO</span>' : ''}
-        <div class="modal-prod-img">${p.image ? `<img src="${p.image}" alt="${p.name}">` : catIcon(p.category, 30)}</div>
+        <div class="modal-prod-img">${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy" class="compare-img" onload="this.classList.add('loaded')" onerror="this.style.display='none'">` : catIcon(p.category, 30)}</div>
         <div class="modal-prod-name">${p.name}</div>
       </div>
-    </th>`; 
+    </th>`;
   });
   html += '</tr></thead><tbody>';
-  
+
   // Price Row
   html += '<tr><td class="sticky-col">Precio</td>';
   compareList.forEach(p => {
@@ -646,8 +622,8 @@ function showCompareModal() {
 
   // Link Row
   html += '</tr><tr><td class="sticky-col">Acción</td>';
-  compareList.forEach(p => { 
-    html += `<td><a href="${p.url}" target="_blank" class="modal-buy-btn">Comprar →</a></td>`; 
+  compareList.forEach(p => {
+    html += `<td><a href="${p.url}" target="_blank" class="modal-buy-btn">Comprar →</a></td>`;
   });
 
   html += '</tr></tbody></table>';

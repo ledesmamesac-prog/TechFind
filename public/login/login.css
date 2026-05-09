@@ -22,6 +22,19 @@
   --transition: 150ms ease;
 }
 
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.topbar-logo:hover .logo-img {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  transform: scale(1.05);
+}
+
 /* ── Background Cascade ────────────────────────────── */
 .cascade-container {
   position: fixed;
@@ -89,6 +102,23 @@
   border-radius: 12px;
   /* Use margin-bottom instead of gap for perfect looping */
   margin-bottom: 20px;
+}
+
+.cascade-img {
+  opacity: 0;
+  animation: fade-in-cascade 0.6s ease-out forwards;
+  filter: grayscale(0%) contrast(1.1) blur(2px);
+}
+
+@keyframes fade-in-cascade {
+  0% {
+    opacity: 0;
+    filter: grayscale(0%) contrast(1.1) blur(4px);
+  }
+  100% {
+    opacity: 0.8;
+    filter: grayscale(0%) contrast(1.1) blur(0);
+  }
 }
 
 /* ── Reset & Base ──────────────────────────────────── */

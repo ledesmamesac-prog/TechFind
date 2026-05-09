@@ -1,4 +1,5 @@
 // ── lobby script.js ──
+import { makeProductCard } from '../shared/product-card.js';
 window.showProductDetails = null; // Pre-declare
 document.addEventListener('DOMContentLoaded', async () => {
   setupProductDetailModal();
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Firebase configuration and initialization
-import { initProfile, toggleFavorite, isFavorite } from "./profile.js";
+import { initProfile, toggleFavorite, isFavorite } from "../profile.js";
 import { CAT_ICONS, catIcon, renderStarsHtml, getStoreBadgeClass } from "./icons.js";
 
 // Initialize Profile Modal & Auth State
@@ -83,23 +84,35 @@ function getHighResImageUrl(imageUrl, targetWidth = 900) {
 function showProductDetails(product) {
   const overlay = document.getElementById('product-detail-modal-overlay');
   const modal = document.getElementById('product-detail-modal');
+  const pdImgBox = document.getElementById('pd-img-box');
   const modalImageUrl = getHighResImageUrl(product.image, 900);
-  
-  document.getElementById('pd-img-box').innerHTML = product.image 
-    ? `<img src="${modalImageUrl}" alt="${product.name}" loading="eager" decoding="async" fetchpriority="high">` 
-    : catIcon(product.category, 100);
-  
+
+  if (product.image) {
+    const img = new Image();
+    img.src = modalImageUrl;
+    img.alt = product.name;
+    img.loading = 'eager';
+    img.decoding = 'async';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.4s ease-in-out';
+    img.onload = () => { img.style.opacity = '1'; };
+    pdImgBox.innerHTML = '';
+    pdImgBox.appendChild(img);
+  } else {
+    pdImgBox.innerHTML = catIcon(product.category, 100);
+  }
+
   const storeBadge = document.getElementById('pd-store');
   storeBadge.className = 'pd-store-badge ' + getStoreBadgeClass(product.store);
   storeBadge.textContent = product.store;
-  
+
   document.getElementById('pd-title').textContent = product.name;
   document.getElementById('pd-rating').innerHTML = renderStarsHtml(product.rating);
-  
+
   const oldPriceEl = document.getElementById('pd-price-old');
   const newPriceEl = document.getElementById('pd-price-new');
   const discPctEl = document.getElementById('pd-discount-pct');
-  
+
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
   if (hasDiscount) {
     oldPriceEl.style.display = 'block';
@@ -111,22 +124,22 @@ function showProductDetails(product) {
     oldPriceEl.style.display = 'none';
     discPctEl.style.display = 'none';
   }
-  
+
   newPriceEl.textContent = `$${Number(product.price).toLocaleString()}`;
-  
+
   const buyBtn = document.getElementById('pd-buy-btn');
   buyBtn.href = product.url;
-  
+
   const favBtn = document.getElementById('pd-fav-btn');
   const favIcon = document.getElementById('pd-fav-icon');
-  
+
   function updateFavBtn() {
     const active = isFavorite(product._id);
     favBtn.classList.toggle('active', active);
     favIcon.innerHTML = active ? CAT_ICONS.heartFilled : CAT_ICONS.heart;
   }
   updateFavBtn();
-  
+
   favBtn.onclick = async (e) => {
     e.stopPropagation();
     const success = await toggleFavorite(product);
@@ -147,7 +160,7 @@ function renderSimilarProducts(current) {
   const similar = allProducts
     .filter(p => p._id !== current._id && p.category === current.category)
     .slice(0, 12);
-    
+
   similar.forEach(p => {
     const card = makeFeaturedCard(p);
     grid.appendChild(card);
@@ -175,7 +188,7 @@ function makeFeaturedCard(p, i = 0) {
 
   const fallbackIcon = catIcon(p.category, 36);
   const imgContent = p.image
-    ? `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img src="${p.image}" alt="${p.name}" loading="lazy" class="feat-img-elm" onload="this.classList.add('loaded');this.parentElement.classList.remove('loading')" onerror="this.style.display='none';this.parentElement.classList.remove('loading');this.nextElementSibling.style.display='flex'">`
     : '';
   const svgFallback = `<span class="feat-placeholder" style="${p.image ? 'display:none' : ''}">${fallbackIcon}</span>`;
 
@@ -184,7 +197,7 @@ function makeFeaturedCard(p, i = 0) {
     : '';
 
   card.innerHTML = `
-    <div class="feat-img">
+    <div class="feat-img ${p.image ? 'loading' : ''}">
       ${imgContent}${svgFallback}
       ${discountTag}
     </div>
@@ -212,12 +225,12 @@ function renderCategoryCards(categories) {
     const thumbs = cat.samples
       .filter(p => p.image)
       .slice(0, 3)
-      .map(p => `<img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">`)
+      .map(p => `<img src="${p.image}" alt="${p.name}" loading="lazy" class="cat-thumb-img" onload="this.classList.add('loaded')" onerror="this.style.display='none'">`)
       .join('');
 
     const card = document.createElement('a');
     card.className = 'cat-card';
-    card.href = `category.html?cat=${encodeURIComponent(cat.name)}`;
+    card.href = `../categories/category.html?cat=${encodeURIComponent(cat.name)}`;
     card.innerHTML = `
       <div class="cat-card-thumbs">
         ${thumbs || `<span class="cat-card-icon-big">${iconBig}</span>`}
@@ -279,7 +292,7 @@ function renderStoreCards(stores, totalProducts = 0) {
     );
     const count = Number.isFinite(rawCount) ? rawCount : 0;
     const card = document.createElement('a');
-    card.href = `category.html?store=${encodeURIComponent(storeName)}`;
+    card.href = `../categories/category.html?store=${encodeURIComponent(storeName)}`;
     card.style.animationDelay = `${i * 0.05}s`;
 
     const imageUrl = getStoreCardImageUrl(storeName);
@@ -295,10 +308,10 @@ function renderStoreCards(stores, totalProducts = 0) {
 
     card.className = cardClass;
     card.innerHTML = `
-      <div class="store-card-image store-card-image--${storeKey}">
+      <div class="store-card-image store-card-image--${storeKey} ${imageUrl ? 'loading' : ''}">
         ${imageUrl
-          ? `<img src="${imageUrl}" alt="${storeName}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-          : ''}
+        ? `<img src="${imageUrl}" alt="${storeName}" loading="lazy" class="store-card-img" onload="this.classList.add('loaded');this.parentElement.classList.remove('loading')" onerror="this.style.display='none';this.parentElement.classList.remove('loading');this.nextElementSibling.style.display='flex'">`
+        : ''}
         <div class="store-card-fallback" style="${imageUrl ? 'display:none' : ''}">${initial}</div>
       </div>
       <div class="store-card-body">
@@ -409,4 +422,9 @@ function setupLocationTabs() {
   });
   updateStore('Alkosto');
 }
-
+const card = makeProductCard(product, {
+  showCompare: false,
+  favorited: isFavorite(product._id),
+  onCardClick: (p) => showProductDetails(p),
+  onFavorite: async (p) => { await toggleFavorite(p); updateFavBtn(); },
+});

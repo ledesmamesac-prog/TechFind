@@ -45,6 +45,11 @@ const verifyFirebaseToken = async (req, res, next) => {
 
 app.use(express.json());
 
+// Route the site root to the dashboard entry point so relative assets keep working.
+app.get('/', (req, res) => {
+  res.redirect('/dashboard/');
+});
+
 // --- AI / Phi-4 proxy endpoints ---
 const AZURE_ENDPOINT = process.env.AZURE_PHI4_ENDPOINT;
 const AZURE_DEPLOYMENT = process.env.AZURE_PHI4_DEPLOYMENT;

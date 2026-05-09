@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="/assets/dibujo.svg">
+	<title>TechFind — Mis favoritos</title>
+	<meta name="description" content="Tus productos favoritos guardados en TechFind.">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link
+		href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" href="../dashboard/styles.css">
+</head>
+
+<body class="favorites-page">
+	<header class="topbar">
+		<a href="../dashboard/index.html" class="topbar-logo">
+			<img src="/assets/dibujo.svg" alt="TechFind Logo" class="logo-img">
+			<span class="logo-text">TechFind</span>
+		</a>
+		<nav class="topbar-nav">
+			<a href="../dashboard/index.html" class="nav-link">Inicio</a>
+			<a href="../categories/category.html" class="nav-link">Todos los productos</a>
+			<a href="favorites.html" class="nav-link">Favoritos</a>
+		</nav>
+		<a href="../login/login.html" class="profile-icon" aria-label="Perfil">
+			<img src="https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png" alt="Perfil">
+		</a>
+		<div class="boton-favoritos">
+			<a href="favorites.html" class="favoritos-link" id="favorites-link" aria-label="Favoritos"
+				aria-current="page"></a>
+		</div>
+	</header>
+
+	<main class="favorites-page-main">
+		<section class="favorites-page-header">
+			<div class="favorites-page-title-wrap">
+				<h1 class="favorites-page-title"><span class="favorites-page-heart">♥</span> Mis Favoritos</h1>
+				<span class="favorites-page-count" id="favorites-page-count">0 productos</span>
+			</div>
+			<button type="button" class="favorites-clear-btn" id="clear-favorites-btn">Borrar todo</button>
+		</section>
+
+		<section class="favorites-page-toolbar" aria-label="Ordenar favoritos">
+			<div class="favorites-toolbar-label">ORDENAR POR:</div>
+			<div class="favorites-sort-group" id="favorites-sort-group">
+				<button type="button" class="favorites-sort-btn active" data-sort="recent">Más reciente</button>
+				<button type="button" class="favorites-sort-btn" data-sort="price-asc">Menor precio</button>
+				<button type="button" class="favorites-sort-btn" data-sort="discount-desc">Mayor descuento</button>
+			</div>
+		</section>
+
+		<section id="favorites-empty" class="favorites-page-empty" hidden>
+			<div class="favorites-page-empty-card">
+				<div class="favorites-empty-illustration" aria-hidden="true">
+					<div class="favorites-empty-card">
+						<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<rect x="10" y="10" width="52" height="52" rx="6" fill="white" stroke="#E2E8F0"
+								stroke-width="2" />
+							<path
+								d="M36 50.5l-1.8-1.6C25.8 41.7 20 36.7 20 30.3C20 25.2 24.1 21 29.2 21c2.9 0 5.7 1.4 7.4 3.7C38.3 22.4 41.1 21 44 21c5.1 0 9.2 4.2 9.2 9.3c0 6.4-5.8 11.4-14.2 18.6L36 50.5z"
+								stroke="#0B46FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+							<rect x="48" y="14" width="10" height="10" rx="1.5" fill="#0B46FF" />
+							<path d="M16 52h14" stroke="#CBD5E1" stroke-width="2.5" stroke-linecap="round" />
+						</svg>
+					</div>
+				</div>
+				<h2 class="favorites-page-empty-title">No tienes favoritos aún</h2>
+				<p class="favorites-page-empty-text">Guarda productos para verlos aquí y compararlos cuando quieras.</p>
+				<a href="../categories/category.html" class="favorites-page-empty-btn">Empezar a buscar</a>
+			</div>
+		</section>
+
+		<section id="favorites-grid" class="favorites-grid" aria-live="polite"></section>
+	</main>
+
+	<footer class="footer">
+		<span>TechFind © 2025 · Precios actualizados cada 24 horas</span>
+	</footer>
+
+	<div id="profile-modal-overlay" class="profile-modal-overlay">
+		<div class="profile-modal">
+			<button class="profile-modal-close" id="close-profile-modal">✕</button>
+			<div class="profile-modal-header">
+				<img id="modal-user-img" src="" alt="Profile Picture" class="modal-user-img-large">
+				<h2 id="modal-user-name">Usuario</h2>
+				<p id="modal-user-email">correo@ejemplo.com</p>
+			</div>
+			<div class="profile-modal-body">
+				<div class="modal-favorites-section">
+					<h3 class="modal-favorites-title">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+							stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ff4d4d">
+							<path
+								d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+						</svg>
+						Mis Favoritos
+					</h3>
+					<div id="modal-favorites-list" class="modal-favorites-list">
+					</div>
+				</div>
+
+				<button id="logout-btn" class="btn-logout" style="margin-top: 24px;">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+						stroke-linejoin="round">
+						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+						<polyline points="16 17 21 12 16 7"></polyline>
+						<line x1="21" y1="12" x2="9" y2="12"></line>
+					</svg>
+					Cerrar sesión
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<script type="module" src="favorites-page.js"></script>
+</body>
+
+</html>

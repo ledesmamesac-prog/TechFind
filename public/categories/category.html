@@ -4,13 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/assets/dibujo.svg">
   <title>TechFind — Productos</title>
   <meta name="description" content="Explora y compara todos los productos de Éxito y Alkosto.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../dashboard/styles.css">
 </head>
 
 <body>
@@ -18,14 +19,15 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-logo">
-      <a href="index.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit">
-        <span class="logo-mark">T</span>
+      <a href="../dashboard/index.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit">
+        <img src="/assets/dibujo.svg" alt="TechFind Logo" class="logo-img">
         <span class="logo-text">TechFind</span>
       </a>
     </div>
     <nav class="topbar-nav">
-      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="../dashboard/index.html" class="nav-link">Inicio</a>
       <a href="category.html" class="nav-link active">Todos los productos</a>
+      <a href="../favorites/favorites.html" class="nav-link">Favoritos</a>
     </nav>
     <div class="topbar-search">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -44,16 +46,20 @@
       </select>
     </div>
     <!-- Profile Icon -->
-    <a href="login.html" class="profile-icon">
+    <a href="../login/login.html" class="profile-icon">
       <img src="https://www.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png" alt="Perfil">
     </a>
+    <div class="boton-favoritos">
+      <a href="../favorites/favorites.html" class="favoritos-link" id="favorites-link" aria-label="Favoritos">
+      </a>
+    </div>
   </header>
 
   <div class="app-body">
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="back-link-wrap">
-        <a href="index.html" class="back-link">← Inicio</a>
+        <a href="../dashboard/index.html" class="back-link">← Inicio</a>
       </div>
       <div class="filter-group">
         <div class="filter-label">Categoría</div>
@@ -102,6 +108,23 @@
       </div>
     </aside>
 
+    <div class="favorites-backdrop"></div>
+
+    <aside class="favorite-bar" aria-label="Favoritos">
+      <div class="favorites-panel">
+        <div class="favorites-panel-header">
+          <div>
+            <div class="favorites-panel-kicker">Guardados</div>
+            <h3 class="favorites-panel-title">Mis Favoritos</h3>
+          </div>
+          <span id="favorites-count" class="favorites-count">0</span>
+        </div>
+
+        <div id="favorite-bar-list" class="modal-favorites-list favorites-panel-list"></div>
+
+        <a href="../favorites/favorites.html" class="favorites-panel-btn">Ver favoritos -→</a>
+      </div>
+    </aside>
     <!-- MAIN -->
     <main class="main">
       <!-- Category title bar (shown when filtered) -->
@@ -199,25 +222,20 @@
         <p id="modal-user-email">correo@ejemplo.com</p>
       </div>
       <div class="profile-modal-body">
-        <div class="modal-favorites-section">
-          <h3 class="modal-favorites-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ff4d4d"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-            Mis Favoritos
-          </h3>
-          <div id="modal-favorites-list" class="modal-favorites-list">
-            <!-- Items injected via JS -->
-          </div>
-        </div>
-
         <button id="logout-btn" class="btn-logout" style="margin-top: 24px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
           Cerrar sesión
         </button>
       </div>
     </div>
   </div>
 
-  <script src="icons.js"></script>
+  <script src="../dashboard/icons.js"></script>
   <script type="module" src="category.js"></script>
   <!-- CHATBOT -->
   <div id="chatbot-container" class="chatbot-container">
@@ -240,15 +258,22 @@
       <div class="chat-input-area">
         <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
         <button id="send-chat" class="chat-send">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 6 22 2"></polygon></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 6 22 2"></polygon>
+          </svg>
         </button>
       </div>
     </div>
     <button id="chat-toggle" class="chat-toggle-btn" title="Ayuda AI">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
     </button>
   </div>
-  <script type="module" src="chatbot.js"></script>
+  <script type="module" src="../dashboard/chatbot.js"></script>
 </body>
 
 </html>
